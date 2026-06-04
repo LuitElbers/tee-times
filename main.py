@@ -33,9 +33,14 @@ async def get_tee_times(
     tc_results, ig_results = await asyncio.gather(
         tc_fetch(date, players, holes_int, include_par3, include_championship),
         ig_fetch(date, players, holes_int, include_par3, include_championship),
+        return_exceptions=True,
     )
 
-    results: list[TeeTime] = tc_results + ig_results
+    results: list[TeeTime] = [
+        tt for r in (tc_results, ig_results)
+        if isinstance(r, list)
+        for tt in r
+    ]
     results.sort(key=lambda t: t.timestamp)
 
     return [t.model_dump(mode="json") for t in results]
