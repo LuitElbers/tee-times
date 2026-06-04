@@ -441,7 +441,7 @@
 
         if (slot) {
           td.className = 'td-slot';
-          td.style.background = slot.free_slots >= 2 ? '#2d7a3a' : '#c8990a';
+          td.style.background = slot.free_slots >= 4 ? '#2d7a3a' : slot.free_slots >= 2 ? '#5a9e65' : '#c8990a';
           td.setAttribute('role', 'button');
           td.tabIndex = 0;
           td.addEventListener('click', () => window.open(slot.booking_url, '_blank'));
