@@ -6,16 +6,27 @@ from models import TeeTime
 _client = httpx.AsyncClient(timeout=15.0)
 
 AMS = ZoneInfo("Europe/Amsterdam")
-API_URL = "https://wilnis.baan.intogolf.nl/api/igg"
-BOOKING_URL = "https://wilnis.golfer.intogolf.nl/#/teetimes"
+
+CLUBS = [
+    {
+        "api_url": "https://wilnis.baan.intogolf.nl/api/igg",
+        "course_name": "Wilnis",
+        "booking_url": "https://wilnis.golfer.intogolf.nl/#/teetimes",
+    },
+    {
+        "api_url": "https://zaanse.baan.intogolf.nl/api/igg",
+        "course_name": "Zaanse",
+        "booking_url": "https://zaanse.golfer.intogolf.nl/#/teetimes",
+    },
+]
 
 
 def _is_par3_course(name: str) -> bool:
     return "par 3" in name.lower() or "par3" in name.lower()
 
 
-async def fetch_tee_times(date: str, players: int, holes: int | None, include_par3: bool = False, include_championship: bool = True) -> list[TeeTime]:
-    resp = await _client.get(API_URL, params={"date": date})
+async def _fetch_club(club: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
+    resp = await _client.get(club["api_url"], params={"date": date})
     resp.raise_for_status()
     payload = resp.json()["payload"]
 
@@ -40,9 +51,7 @@ async def fetch_tee_times(date: str, players: int, holes: int | None, include_pa
             max_players = slot["sttMaxPlayers"]
             player_count = slot["playerCount"]
             free_slots = max_players - player_count
-            is_available = free_slots >= players
-
-            if not is_available:
+            if free_slots < players:
                 continue
 
             minutes = slot["sttTimeFrom"]
@@ -57,7 +66,7 @@ async def fetch_tee_times(date: str, players: int, holes: int | None, include_pa
             price_eur = float(raw_price) if raw_price else None
 
             result.append(TeeTime(
-                course="Wilnis",
+                course=club["course_name"],
                 sub_course=crl_name,
                 time=f"{minutes // 60:02d}:{minutes % 60:02d}",
                 timestamp=utc_dt,
@@ -66,7 +75,16 @@ async def fetch_tee_times(date: str, players: int, holes: int | None, include_pa
                 total_slots=max_players,
                 price_eur=price_eur,
                 is_available=True,
-                booking_url=BOOKING_URL,
+                booking_url=club["booking_url"],
             ))
 
     return result
+
+
+async def fetch_tee_times(date: str, players: int, holes: int | None, include_par3: bool = False, include_championship: bool = True) -> list[TeeTime]:
+    import asyncio
+    results = await asyncio.gather(
+        *[_fetch_club(club, date, players, holes, include_par3, include_championship) for club in CLUBS],
+        return_exceptions=True,
+    )
+    return [tt for r in results if isinstance(r, list) for tt in r]

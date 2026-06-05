@@ -19,6 +19,16 @@ COURSES = [
         "course_name": "Spaarnwoude",
         "booking_url": "https://spaarnwoude.teecontrol.com/book",
     },
+    {
+        "origin": "https://liemeer.teecontrol.com",
+        "course_name": "Liemeer",
+        "booking_url": "https://liemeer.teecontrol.com/book",
+    },
+    {
+        "origin": "https://bergvliet.teecontrol.com",
+        "course_name": "Bergvliet",
+        "booking_url": "https://bergvliet.teecontrol.com/book",
+    },
 ]
 
 API_BASE = "https://api.teecontrol.com"
@@ -108,5 +118,8 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
 
 
 async def fetch_tee_times(date: str, players: int, holes: int | None, include_par3: bool = False, include_championship: bool = True) -> list[TeeTime]:
-    results = await asyncio.gather(*[_fetch_course(c, date, players, holes, include_par3, include_championship) for c in COURSES])
-    return [tt for sublist in results for tt in sublist]
+    results = await asyncio.gather(
+        *[_fetch_course(c, date, players, holes, include_par3, include_championship) for c in COURSES],
+        return_exceptions=True,
+    )
+    return [tt for r in results if isinstance(r, list) for tt in r]
