@@ -361,28 +361,29 @@
     const courseSubHoles = new Map(); // "course|sub" -> holes value (may vary — store all)
 
     for (const row of data) {
-      const key = `${row.course}|||${row.sub_course}`;
+      const key = `${row.course}|||${row.sub_course}|||${row.holes}`;
       if (!colMap.has(key)) {
         colMap.set(key, { course: row.course, sub_course: row.sub_course, holes: row.holes });
       }
     }
 
-    // Sort columns: by COURSE_ORDER, then alpha sub_course
+    // Sort columns: by COURSE_ORDER, then alpha sub_course, then holes
     const cols = Array.from(colMap.values()).sort((a, b) => {
       const oa = COURSE_ORDER.indexOf(a.course);
       const ob = COURSE_ORDER.indexOf(b.course);
       if (oa !== ob) return (oa === -1 ? 999 : oa) - (ob === -1 ? 999 : ob);
-      return a.sub_course.localeCompare(b.sub_course);
+      if (a.sub_course !== b.sub_course) return a.sub_course.localeCompare(b.sub_course);
+      return a.holes - b.holes;
     });
 
     // Collect unique times at or after fromTime (sorted)
     const timeSet = new Set(data.filter(r => r.time >= fromTime).map(r => r.time));
     const times = Array.from(timeSet).sort();
 
-    // Build lookup: "course|||sub_course|||time" -> row
+    // Build lookup: "course|||sub_course|||holes|||time" -> row
     const lookup = new Map();
     for (const row of data) {
-      const key = `${row.course}|||${row.sub_course}|||${row.time}`;
+      const key = `${row.course}|||${row.sub_course}|||${row.holes}|||${row.time}`;
       lookup.set(key, row);
     }
 
@@ -458,7 +459,7 @@
 
       for (let ci = 0; ci < cols.length; ci++) {
         const col = cols[ci];
-        const key = `${col.course}|||${col.sub_course}|||${time}`;
+        const key = `${col.course}|||${col.sub_course}|||${col.holes}|||${time}`;
         const slot = lookup.get(key);
         const td = document.createElement('td');
         if (clubBoundaries.has(ci)) td.style.borderLeft = '3px solid #000';

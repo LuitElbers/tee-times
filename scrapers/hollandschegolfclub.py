@@ -47,7 +47,20 @@ def _parse_holes(course_name: str) -> int | None:
 
 
 async def _fetch_location(loc: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool, nonce: str) -> list[TeeTime]:
-    holes_param = holes if holes in (9, 18) else 9
+    # When holes filter is unset, fetch both 9 and 18 hole products from the API
+    holes_params = [9, 18] if holes is None else [holes]
+    if not holes_params[0] in (9, 18):
+        holes_params = [9, 18]
+
+    import asyncio as _asyncio
+    sub_results = await _asyncio.gather(
+        *[_fetch_location_holes(loc, date, players, holes, include_par3, include_championship, nonce, hp) for hp in holes_params],
+        return_exceptions=True,
+    )
+    return [tt for r in sub_results if isinstance(r, list) for tt in r]
+
+
+async def _fetch_location_holes(loc: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool, nonce: str, holes_param: int) -> list[TeeTime]:
     resp = await _client.post(AJAX_URL, data={
         "action": "itg_get_teetimes",
         "nonce": nonce,
@@ -73,7 +86,7 @@ async def _fetch_location(loc: dict, date: str, players: int, holes: int | None,
         if not is_short and not include_championship:
             continue
 
-        slot_holes = _parse_holes(crl_name) or holes_param
+        slot_holes = _parse_holes(crl_name) or holes_param  # fallback to what we requested
         if holes is not None and slot_holes != holes:
             continue
 
