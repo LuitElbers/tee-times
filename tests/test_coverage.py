@@ -130,11 +130,13 @@ async def raw_intogolf(dates: list[str]) -> set[tuple[str, int]]:
                     r.raise_for_status()
                     for course in r.json().get("payload", []):
                         for slot in course.get("times", []):
-                            holes = slot.get("hole")
                             max_p = slot.get("sttMaxPlayers", 4)
                             booked = slot.get("playerCount", 0)
-                            if holes and (max_p - booked) >= 1:
-                                seen.add((club["course_name"], holes))
+                            if (max_p - booked) < 1:
+                                continue
+                            seen.add((club["course_name"], 9))
+                            if slot.get("sttCrlNrNext", 0) != 0:
+                                seen.add((club["course_name"], 18))
                 except Exception:
                     pass
     return seen

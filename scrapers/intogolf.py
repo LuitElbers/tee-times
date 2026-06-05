@@ -44,15 +44,15 @@ async def _fetch_club(club: dict, date: str, players: int, holes: int | None, in
             continue
 
         for slot in course["times"]:
-            slot_holes = slot["hole"]
-            if holes is not None and slot_holes != holes:
-                continue
-
             max_players = slot["sttMaxPlayers"]
             player_count = slot["playerCount"]
             free_slots = max_players - player_count
             if free_slots < players:
                 continue
+
+            # sttCrlNrNext != 0 means this slot can be booked as 18 holes
+            # (play this course then continue to the linked next course)
+            has_18h = slot.get("sttCrlNrNext", 0) != 0
 
             minutes = slot["sttTimeFrom"]
             local_dt = datetime(
@@ -61,22 +61,27 @@ async def _fetch_club(club: dict, date: str, players: int, holes: int | None, in
                 tzinfo=AMS,
             )
             utc_dt = local_dt.astimezone(ZoneInfo("UTC"))
+            time_str = f"{minutes // 60:02d}:{minutes % 60:02d}"
 
-            raw_price = slot["greenFeePrice9"] if slot_holes == 9 else slot["greenFeePrice18"]
-            price_eur = float(raw_price) if raw_price else None
+            def make_tt(h: int) -> TeeTime:
+                raw_price = slot["greenFeePrice9"] if h == 9 else slot["greenFeePrice18"]
+                return TeeTime(
+                    course=club["course_name"],
+                    sub_course=crl_name,
+                    time=time_str,
+                    timestamp=utc_dt,
+                    holes=h,
+                    free_slots=free_slots,
+                    total_slots=max_players,
+                    price_eur=float(raw_price) if raw_price else None,
+                    is_available=True,
+                    booking_url=club["booking_url"],
+                )
 
-            result.append(TeeTime(
-                course=club["course_name"],
-                sub_course=crl_name,
-                time=f"{minutes // 60:02d}:{minutes % 60:02d}",
-                timestamp=utc_dt,
-                holes=slot_holes,
-                free_slots=free_slots,
-                total_slots=max_players,
-                price_eur=price_eur,
-                is_available=True,
-                booking_url=club["booking_url"],
-            ))
+            if holes is None or holes == 9:
+                result.append(make_tt(9))
+            if has_18h and (holes is None or holes == 18):
+                result.append(make_tt(18))
 
     return result
 
