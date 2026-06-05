@@ -244,11 +244,28 @@
 </div>
 
 <script>
-  const COURSE_ORDER = ["Hoge Dijk", "Spaarnwoude", "Wilnis"];
+  const COURSE_ORDER = [
+    "Hoge Dijk", "Spaarnwoude", "Liemeer", "Bergvliet",
+    "Wilnis", "Zaanse",
+    "De Purmer", "De Loonsche Duynen",
+    "Waterland", "Amsteldijk",
+    "Heemskerk", "Haenen",
+    "Rijk van Nunspeet",
+  ];
   const COURSE_COLORS = {
-    "Hoge Dijk":   { main: "#1a6b3c", sub: "#2a8a50" },
-    "Spaarnwoude": { main: "#1a3a6b", sub: "#2a4f8a" },
-    "Wilnis":      { main: "#6b3a1a", sub: "#8a4f2a" },
+    "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
+    "Spaarnwoude":         { main: "#1a3a6b", sub: "#24416e" },
+    "Liemeer":             { main: "#3a6b1a", sub: "#42712a" },
+    "Bergvliet":           { main: "#1a5a6b", sub: "#246070" },
+    "Wilnis":              { main: "#6b3a1a", sub: "#704224" },
+    "Zaanse":              { main: "#5a1a6b", sub: "#622472" },
+    "De Purmer":           { main: "#6b1a3a", sub: "#721e42" },
+    "De Loonsche Duynen":  { main: "#6b1a3a", sub: "#7d2a4e" },
+    "Waterland":           { main: "#6b4e1a", sub: "#705524" },
+    "Amsteldijk":          { main: "#6b1a1a", sub: "#721e1e" },
+    "Heemskerk":           { main: "#1a1a6b", sub: "#242472" },
+    "Haenen":              { main: "#1a1a6b", sub: "#2e2e7d" },
+    "Rijk van Nunspeet":   { main: "#2d5a2d", sub: "#336633" },
   };
 
   function todayStr() {
@@ -402,19 +419,28 @@
       th.className = 'th-course';
       const colors = COURSE_COLORS[grp.course] || { main: '#444', sub: '#666' };
       th.style.background = colors.main;
+      th.style.borderLeft = '3px solid #000';
       tr1.appendChild(th);
     }
     thead.appendChild(tr1);
 
+    // Build set of column indices that start a new club
+    const clubBoundaries = new Set();
+    cols.forEach((col, idx) => {
+      if (idx === 0 || col.course !== cols[idx - 1].course) clubBoundaries.add(idx);
+    });
+
     // Row 2: sub-course headers
     const tr2 = document.createElement('tr');
-    for (const col of cols) {
+    for (let ci = 0; ci < cols.length; ci++) {
+      const col = cols[ci];
       const th = document.createElement('th');
       const shortName = col.sub_course.replace(/baan$/i, '');
       th.textContent = `${shortName} ${col.holes}`;
       th.className = 'th-sub';
       const colors = COURSE_COLORS[col.course] || { main: '#444', sub: '#666' };
       th.style.background = colors.sub;
+      if (clubBoundaries.has(ci)) th.style.borderLeft = '3px solid #000';
       tr2.appendChild(th);
     }
     thead.appendChild(tr2);
@@ -430,10 +456,12 @@
       tdTime.className = 'td-time';
       tr.appendChild(tdTime);
 
-      for (const col of cols) {
+      for (let ci = 0; ci < cols.length; ci++) {
+        const col = cols[ci];
         const key = `${col.course}|||${col.sub_course}|||${time}`;
         const slot = lookup.get(key);
         const td = document.createElement('td');
+        if (clubBoundaries.has(ci)) td.style.borderLeft = '3px solid #000';
 
         if (slot) {
           td.className = 'td-slot';
@@ -464,7 +492,7 @@
         }
 
         tr.appendChild(td);
-      }
+      } // end cols loop
 
       tbody.appendChild(tr);
     }
