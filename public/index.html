@@ -42,7 +42,7 @@
     white-space: nowrap;
   }
 
-  #date-input, #from-time, #to-time {
+  #date-input, #from-time, #to-time, #distance {
     font-family: inherit;
     font-size: 14px;
     padding: 4px 8px;
@@ -51,7 +51,7 @@
     outline: none;
   }
 
-  #date-input:focus, #from-time:focus, #to-time:focus {
+  #date-input:focus, #from-time:focus, #to-time:focus, #distance:focus {
     border-color: #555;
   }
 
@@ -318,7 +318,7 @@
 
   #info-btn:hover { background: #f0f0f0; }
 
-  #info-overlay {
+  #info-overlay, #loc-overlay {
     display: none;
     position: fixed;
     inset: 0;
@@ -329,9 +329,9 @@
     padding: 20px;
   }
 
-  #info-overlay.open { display: flex; }
+  #info-overlay.open, #loc-overlay.open { display: flex; }
 
-  #info-card {
+  #info-card, #loc-card {
     background: #fff;
     border-radius: 10px;
     max-width: 440px;
@@ -341,6 +341,68 @@
     padding: 22px 26px 26px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.25);
   }
+
+  #loc-btn {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    line-height: 1.2;
+  }
+
+  #loc-btn:hover { background: #f0f0f0; }
+
+  #loc-indicator {
+    font-size: 12px;
+    color: #2d7a3a;
+    white-space: nowrap;
+  }
+
+  .loc-text { font-size: 14px; color: #333; margin: 6px 0 16px; line-height: 1.4; }
+
+  #loc-gps-btn {
+    width: 100%;
+    padding: 11px;
+    background: #222;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .loc-or { text-align: center; color: #999; font-size: 13px; margin: 12px 0; }
+
+  .loc-manual { display: flex; gap: 8px; }
+
+  #loc-input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+  }
+
+  #loc-go-btn {
+    padding: 9px 16px;
+    background: #222;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .loc-status { font-size: 13px; color: #666; margin-top: 12px; min-height: 18px; }
+
+  .th-km { font-weight: 400; font-size: 11px; opacity: 0.85; }
 
   #info-card-header {
     display: flex;
@@ -460,6 +522,18 @@
       <option value="20:00" selected>20:00</option>
     </select>
   </div>
+  <div class="filter-group desktop-filter">
+    <label for="distance">Distance:</label>
+    <select id="distance">
+      <option value="any" selected>Any</option>
+      <option value="10">&#8804; 10 km</option>
+      <option value="25">&#8804; 25 km</option>
+      <option value="50">&#8804; 50 km</option>
+      <option value="100">&#8804; 100 km</option>
+    </select>
+    <button id="loc-btn" title="Set your location">&#128205;</button>
+    <span id="loc-indicator"></span>
+  </div>
   <button id="filters-btn">Filters</button>
   <span id="status"></span>
   <button id="info-btn">Info</button>
@@ -534,8 +608,37 @@
         <option value="20:00" selected>20:00</option>
       </select>
     </div>
+    <div class="m-filter-group">
+      <span class="m-filter-label">Distance</span>
+      <div class="toggle-group" id="m-distance-group">
+        <button class="toggle-btn active" data-value="any">Any</button>
+        <button class="toggle-btn" data-value="10">10 km</button>
+        <button class="toggle-btn" data-value="25">25 km</button>
+        <button class="toggle-btn" data-value="50">50 km</button>
+        <button class="toggle-btn" data-value="100">100 km</button>
+      </div>
+      <button id="m-loc-btn" class="toggle-btn">&#128205; Set my location</button>
+      <span id="m-loc-indicator" style="font-size:13px;color:#2d7a3a"></span>
+    </div>
   </div>
   <button id="apply-btn">Apply</button>
+</div>
+
+<div id="loc-overlay">
+  <div id="loc-card">
+    <div id="info-card-header">
+      <span id="info-title">Your location</span>
+      <button id="loc-close">&#215;</button>
+    </div>
+    <p class="loc-text">Find courses near you. Share your location, or enter a town or postcode.</p>
+    <button id="loc-gps-btn">Use my location</button>
+    <div class="loc-or">or</div>
+    <div class="loc-manual">
+      <input id="loc-input" type="text" placeholder="Postcode or town, e.g. 1011 AB or Amsterdam">
+      <button id="loc-go-btn">Go</button>
+    </div>
+    <p id="loc-status" class="loc-status"></p>
+  </div>
 </div>
 
 <div id="info-overlay">
@@ -577,6 +680,39 @@
     "Rijk van Nunspeet":   { main: "#2d5a2d", sub: "#336633" },
   };
 
+  // Course coordinates (geocoded via OpenStreetMap, verified per club).
+  const COURSE_COORDS = {
+    "Hoge Dijk":          { lat: 52.28711, lon: 4.95976 },
+    "Waterland":          { lat: 52.40561, lon: 4.95225 },
+    "Spaarnwoude":        { lat: 52.42886, lon: 4.69618 },
+    "Wilnis":             { lat: 52.18857, lon: 4.89142 },
+    "De Purmer":          { lat: 52.50175, lon: 4.99675 },
+    "Zaanse":             { lat: 52.47300, lon: 4.86831 },
+    "Amsteldijk":         { lat: 52.29891, lon: 4.89778 },
+    "Liemeer":            { lat: 52.18895, lon: 4.73783 },
+    "Heemskerk":          { lat: 52.49205, lon: 4.70795 },
+    "Bergvliet":          { lat: 51.63920, lon: 4.79748 },
+    "Haenen":             { lat: 51.61445, lon: 4.83720 },
+    "De Loonsche Duynen": { lat: 51.65748, lon: 5.06648 },
+    "Rijk van Nunspeet":  { lat: 52.36771, lon: 5.79827 },
+  };
+
+  function haversineKm(a, b) {
+    const R = 6371;
+    const dLat = (b.lat - a.lat) * Math.PI / 180;
+    const dLon = (b.lon - a.lon) * Math.PI / 180;
+    const la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  function courseKm(courseName) {
+    if (!userCoords) return null;
+    const c = COURSE_COORDS[courseName];
+    if (!c) { console.warn('No coordinates for course:', courseName); return null; }
+    return haversineKm(userCoords, c);
+  }
+
   function todayStr() {
     const d = new Date();
     const y = d.getFullYear();
@@ -594,13 +730,103 @@
   let toTime = '20:00';
   let includePar3 = false;
   let includeChampionship = true;
+  let maxKm = null;        // null = Any distance
+  let userCoords = null;   // { lat, lon, label }
+  let lastData = null;     // most recent server response, for client-side re-filtering
+
+  try {
+    const saved = JSON.parse(localStorage.getItem('userCoords'));
+    if (saved && typeof saved.lat === 'number' && typeof saved.lon === 'number') userCoords = saved;
+  } catch (e) { /* no/invalid saved location */ }
 
   // Desktop filter listeners
   const fromTimeSelect = document.getElementById('from-time');
-  fromTimeSelect.addEventListener('change', () => { fromTime = fromTimeSelect.value; fetchData(); });
+  fromTimeSelect.addEventListener('change', () => { fromTime = fromTimeSelect.value; applyFilters(); });
 
   const toTimeSelect = document.getElementById('to-time');
-  toTimeSelect.addEventListener('change', () => { toTime = toTimeSelect.value; fetchData(); });
+  toTimeSelect.addEventListener('change', () => { toTime = toTimeSelect.value; applyFilters(); });
+
+  // Distance + location
+  const distanceSelect = document.getElementById('distance');
+  distanceSelect.addEventListener('change', () => onDistanceChange(distanceSelect.value));
+
+  function syncDistanceControls(val) {
+    distanceSelect.value = val;
+    document.querySelectorAll('#m-distance-group .toggle-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === val);
+    });
+  }
+
+  function onDistanceChange(val) {
+    maxKm = val === 'any' ? null : Number(val);
+    syncDistanceControls(val);
+    if (maxKm !== null && !userCoords) {
+      openLocModal();
+    } else {
+      applyFilters();
+    }
+  }
+
+  function updateLocIndicator() {
+    const label = userCoords ? ('\u{1F4CD} ' + (userCoords.label || 'set')) : '';
+    document.getElementById('loc-indicator').textContent = label;
+    document.getElementById('m-loc-indicator').textContent = label;
+  }
+
+  const locOverlay = document.getElementById('loc-overlay');
+  function openLocModal() { document.getElementById('loc-status').textContent = ''; locOverlay.classList.add('open'); }
+  function closeLocModal() { locOverlay.classList.remove('open'); }
+
+  document.getElementById('loc-btn').addEventListener('click', openLocModal);
+  document.getElementById('loc-close').addEventListener('click', () => {
+    closeLocModal();
+    if (!userCoords) { maxKm = null; syncDistanceControls('any'); applyFilters(); }
+  });
+  locOverlay.addEventListener('click', e => { if (e.target === locOverlay) document.getElementById('loc-close').click(); });
+
+  function setUserCoords(coords) {
+    userCoords = coords;
+    try { localStorage.setItem('userCoords', JSON.stringify(coords)); } catch (e) { /* storage unavailable */ }
+    updateLocIndicator();
+    closeLocModal();
+    applyFilters();
+  }
+
+  document.getElementById('loc-gps-btn').addEventListener('click', () => {
+    const status = document.getElementById('loc-status');
+    if (!navigator.geolocation) { status.textContent = 'Geolocation is not supported here — enter a town or postcode instead.'; return; }
+    status.textContent = 'Locating…';
+    navigator.geolocation.getCurrentPosition(
+      pos => setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'My location' }),
+      err => { status.textContent = 'Could not get your location (' + err.message + '). Enter a town or postcode instead.'; },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+    );
+  });
+
+  async function geocodeManual() {
+    const status = document.getElementById('loc-status');
+    const q = document.getElementById('loc-input').value.trim();
+    if (!q) return;
+    status.textContent = 'Searching…';
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=nl&q=' + encodeURIComponent(q);
+    let d;
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) throw new Error('lookup failed (' + res.status + ')');
+      d = await res.json();
+    } catch (e) {
+      status.textContent = 'Location lookup failed: ' + e.message;
+      return;
+    }
+    if (!d.length) { status.textContent = 'No match found. Try a different town or postcode.'; return; }
+    setUserCoords({ lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon), label: q });
+  }
+
+  document.getElementById('loc-go-btn').addEventListener('click', geocodeManual);
+  document.getElementById('loc-input').addEventListener('keydown', e => { if (e.key === 'Enter') geocodeManual(); });
+  document.getElementById('m-loc-btn').addEventListener('click', openLocModal);
+  setupMobileToggle('m-distance-group');
+  updateLocIndicator();
 
   const includePar3Checkbox = document.getElementById('include-par3');
   includePar3Checkbox.addEventListener('change', () => { includePar3 = includePar3Checkbox.checked; fetchData(); });
@@ -649,6 +875,10 @@
     document.getElementById('m-include-par3').checked = includePar3;
     document.getElementById('m-from-time').value = fromTime;
     document.getElementById('m-to-time').value = toTime;
+    const distVal = maxKm === null ? 'any' : String(maxKm);
+    document.querySelectorAll('#m-distance-group .toggle-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === distVal);
+    });
   }
 
   const filterOverlay = document.getElementById('filter-overlay');
@@ -674,8 +904,14 @@
     fromTime = document.getElementById('m-from-time').value;
     toTime = document.getElementById('m-to-time').value;
 
+    const mDistBtn = document.querySelector('#m-distance-group .toggle-btn.active');
+    const distVal = mDistBtn ? mDistBtn.dataset.value : 'any';
+    maxKm = distVal === 'any' ? null : Number(distVal);
+    syncDistanceControls(distVal);
+
     filterOverlay.classList.remove('open');
     fetchData();
+    if (maxKm !== null && !userCoords) openLocModal();
   });
 
   // Info modal
@@ -724,8 +960,23 @@
     }
 
     status.textContent = '';
+    lastData = data;
+    applyFilters();
+  }
 
-    const visible = data.filter(r => r.time >= fromTime && r.time <= toTime);
+  function applyFilters() {
+    const container = document.getElementById('table-container');
+    const message = document.getElementById('message');
+    if (!lastData) return;
+
+    let visible = lastData.filter(r => r.time >= fromTime && r.time <= toTime);
+
+    if (maxKm !== null && userCoords) {
+      visible = visible.filter(r => {
+        const km = courseKm(r.course);
+        return km !== null && km <= maxKm;
+      });
+    }
 
     if (visible.length === 0) {
       message.style.display = 'flex';
@@ -793,6 +1044,13 @@
       const th = document.createElement('th');
       th.colSpan = grp.count;
       th.textContent = grp.course;
+      const km = courseKm(grp.course);
+      if (km !== null) {
+        const kmSpan = document.createElement('span');
+        kmSpan.className = 'th-km';
+        kmSpan.textContent = ' · ' + Math.round(km) + ' km';
+        th.appendChild(kmSpan);
+      }
       th.className = 'th-course';
       const colors = COURSE_COLORS[grp.course] || { main: '#444', sub: '#666' };
       th.style.background = colors.main;
