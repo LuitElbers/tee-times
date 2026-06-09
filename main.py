@@ -1,5 +1,6 @@
 from datetime import date as date_type
 from fastapi import FastAPI, Query
+from fastapi.responses import RedirectResponse
 import asyncio
 from scrapers.teecontrol import fetch_tee_times as tc_fetch
 from scrapers.intogolf import fetch_tee_times as ig_fetch
@@ -11,6 +12,11 @@ from scrapers.rijkvannunspeet import fetch_tee_times as rvn_fetch
 from models import TeeTime
 
 app = FastAPI()
+
+
+@app.get("/")
+async def index():
+    return RedirectResponse("/index.html")
 
 
 @app.get("/api/tee-times")
