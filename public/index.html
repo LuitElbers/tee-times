@@ -725,7 +725,9 @@
 
     status.textContent = '';
 
-    if (data.length === 0) {
+    const visible = data.filter(r => r.time >= fromTime && r.time <= toTime);
+
+    if (visible.length === 0) {
       message.style.display = 'flex';
       message.className = '';
       message.textContent = 'No tee times found for these filters.';
@@ -736,7 +738,7 @@
 
     message.style.display = 'none';
 
-    renderTable(data, container);
+    renderTable(visible, container);
   }
 
   function renderTable(data, container) {
@@ -757,7 +759,7 @@
       return a.holes - b.holes;
     });
 
-    const timeSet = new Set(data.filter(r => r.time >= fromTime && r.time <= toTime).map(r => r.time));
+    const timeSet = new Set(data.map(r => r.time));
     const times = Array.from(timeSet).sort();
 
     const lookup = new Map();
