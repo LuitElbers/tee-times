@@ -13,6 +13,7 @@ COURSES = [
     {
         "slug": "golf-amsteldijk",
         "name": "Amsteldijk",
+        "is_par3": False,
         "booking_url": "https://www.nexxchange.com/search/teetimes/golf-amsteldijk?sortIndex=1",
         "facets": [
             {"facet_id": 1, "holes": 9},
@@ -89,6 +90,7 @@ async def fetch_tee_times(date: str, players: int, holes: int | None, include_pa
     tasks = [
         _fetch_facet(course, facet, date, players, holes)
         for course in COURSES
+        if (course["is_par3"] and include_par3) or (not course["is_par3"] and include_championship)
         for facet in course["facets"]
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)

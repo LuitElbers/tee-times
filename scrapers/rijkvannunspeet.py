@@ -14,6 +14,7 @@ BASE_URL = "https://reserveren.hetrijkgolfbanen.nl/OnlineRes/RvNu/Home/WidgetVie
 BOOKING_URL = "https://reserveren.hetrijkgolfbanen.nl/OnlineRes/RvNu/Home/WidgetView/?Option=bezoekers"
 
 COURSE_NAMES = {4: "Nunspeet Noord", 5: "Nunspeet Oost", 6: "Nunspeet Zuid"}
+COURSE_IS_PAR3 = {4: False, 5: False, 6: False}
 
 COURSE_DATA = [
     {"CourseName": "Nunspeet Noord ", "SiteId": "5", "SiteName": "Het Rijk van Nunspeet", "CourseId": "4", "CourseGUID": "51a11769-e795-4993-b4cb-512fed18d484", "SiteStreet1": "Plesmanlaan 30", "SiteStreet2": "info@golfbaanhetrijkvannunspeet.nl", "SiteCity": "Nunspeet", "SiteState": "Gelderland", "SitePostalCode": "8072PT", "SitePhone": "0341255255", "SiteFax": "0341255285", "Selected": "True"},
@@ -68,6 +69,11 @@ async def fetch_tee_times(date: str, players: int, holes: int | None, include_pa
 
         course_id = int(slot_div.get("courseid", 0))
         sub_course = COURSE_NAMES.get(course_id, "")
+        is_par3 = COURSE_IS_PAR3.get(course_id, False)
+        if is_par3 and not include_par3:
+            continue
+        if not is_par3 and not include_championship:
+            continue
 
         player_p = slot_div.select_one(".player p")
         free_slots = 4

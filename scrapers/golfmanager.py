@@ -10,6 +10,7 @@ COURSES = [
         "base_url": "https://eu.golfmanager.com/golfwaterland",
         "area": 2,
         "course_name": "Waterland",
+        "is_par3": False,
         "booking_url": "https://eu.golfmanager.com/golfwaterland/consumer/book?area=2",
     },
 ]
@@ -25,6 +26,10 @@ def _parse_holes(name: str) -> int | None:
 
 
 async def _fetch_course(course: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
+    if course["is_par3"] and not include_par3:
+        return []
+    if not course["is_par3"] and not include_championship:
+        return []
     url = f"{course['base_url']}/consumer/availability.json"
     resp = await _client.get(url, params={"date": f"{date}T00:00", "area": course["area"]})
     resp.raise_for_status()

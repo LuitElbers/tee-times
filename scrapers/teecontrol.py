@@ -33,8 +33,25 @@ COURSES = [
 
 API_BASE = "https://api.teecontrol.com"
 
-# Sub-courses with no par-5 holes, verified from club scorecards
-SHORT_COURSES = {"Abcoudebaan", "A-holes", "B-holes", "F-holes"}
+# The app distinguishes two course types: "championship" (has par-5 holes) and "par 3/4" (no par-5 holes).
+# The teecontrol API provides is_par_three per sub-course, but that flag means every hole is par 3 —
+# it does NOT cover par 3/4 courses (mix of par 3 and par 4, no par 5). Those require explicit overrides.
+#
+# SHORT_COURSES: sub-courses verified to have no par-5 holes (par 3 or par 3/4).
+# Add to this set when a sub-course should be treated as "par 3/4" but is_par_three is False.
+#
+# To find the exact name to add: query GET https://api.teecontrol.com/sets?can_book_at=<date>
+# with a guest token (Origin: https://<club>.teecontrol.com). The name to use is everything
+# after " | " in the "name" field (or the full name if no " | " is present).
+#
+# Note: there is no public Dutch course database with per-hole par data. The NGF has one
+# internally but it requires an affiliated software supplier agreement to access.
+SHORT_COURSES = {
+    # Spaarnwoude: verified par 3/4 sub-courses (no par-5 holes on scorecard)
+    "Abcoudebaan", "A-holes", "B-holes", "F-holes",
+    # Liemeer: Bovenlandenbaan is par 3/4; is_par_three=False is correct, but still needs filtering
+    "9 holes - par 3/4", "18 holes - par 3/4",
+}
 
 
 async def _get_token(origin: str) -> str:
@@ -70,7 +87,8 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
     for s in sets:
         if "footgolf" in s.get("name", "").lower():
             continue
-        is_short = s.get("is_par_three") or _strip_season_prefix(s.get("name", "")) in SHORT_COURSES
+        raw_name = _strip_season_prefix(s.get("name", ""))
+        is_short = s.get("is_par_three") or raw_name in SHORT_COURSES
         if is_short and not include_par3:
             continue
         if not is_short and not include_championship:

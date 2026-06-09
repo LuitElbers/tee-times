@@ -10,8 +10,8 @@ _client = httpx.AsyncClient(timeout=15.0, follow_redirects=True)
 AMS = ZoneInfo("Europe/Amsterdam")
 
 COURSES = [
-    {"subdomain": "heemskerkse", "name": "Heemskerk"},
-    {"subdomain": "dehaenen", "name": "Haenen"},
+    {"subdomain": "heemskerkse", "name": "Heemskerk", "is_par3": False},
+    {"subdomain": "dehaenen", "name": "Haenen", "is_par3": False},
 ]
 
 
@@ -73,6 +73,10 @@ async def _fetch_course_holes(course: dict, date: str, players: int, holes_param
 
 
 async def _fetch_course(course: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
+    if course["is_par3"] and not include_par3:
+        return []
+    if not course["is_par3"] and not include_championship:
+        return []
     holes_to_fetch = [holes] if holes in (9, 18) else [9, 18]
     sub_results = await asyncio.gather(
         *[_fetch_course_holes(course, date, players, h, include_par3) for h in holes_to_fetch],
