@@ -1,6 +1,5 @@
-import re
 import asyncio
-from datetime import datetime, date as date_type, timezone
+from datetime import datetime, date as date_type
 from zoneinfo import ZoneInfo
 import httpx
 from bs4 import BeautifulSoup
@@ -9,93 +8,90 @@ from models import TeeTime
 _client = httpx.AsyncClient(timeout=15.0, follow_redirects=True)
 AMS = ZoneInfo("Europe/Amsterdam")
 
+# Each "baan" is a bookable course variant from the e-golf4u baan dropdown.
+# baan id, holes and par-3 flag come from the site's own labels (authoritative).
 COURSES = [
-    {"subdomain": "heemskerkse", "name": "Heemskerk", "is_par3": False},
-    {"subdomain": "dehaenen", "name": "Haenen", "is_par3": False},
+    {
+        "subdomain": "dehaenen",
+        "name": "Haenen",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 3, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 4, "sub": "Par 3", "holes": 9, "is_par3": True},
+        ],
+    },
+    {
+        "subdomain": "heemskerkse",
+        "name": "Heemskerk",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 7, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 8, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 2, "sub": "Par 3 18 holes AB", "holes": 18, "is_par3": True},
+            {"baan": 6, "sub": "Par 3 9 holes A", "holes": 9, "is_par3": True},
+            {"baan": 12, "sub": "Par 3 9 holes B", "holes": 9, "is_par3": True},
+            {"baan": 14, "sub": "Par 3 18 holes BA", "holes": 18, "is_par3": True},
+        ],
+    },
 ]
 
 
-async def _fetch_course_holes(course: dict, date: str, players: int, holes_param: int, include_par3: bool) -> list[TeeTime]:
-    parsed_date = date_type.fromisoformat(date)
+async def _fetch_baan(course: dict, baan: dict, date: str, players: int) -> list[TeeTime]:
+    parsed = date_type.fromisoformat(date)
+    datum = parsed.strftime("%d-%m-%Y")
     url = f"https://{course['subdomain']}.teetime.e-golf4u.nl/app/booking/teetime"
-    resp = await _client.get(url, params={"date": date, "holes": holes_param})
+    params = {"baan": baan["baan"], "datum": datum, "holes": baan["holes"], "tijd": "", "view": "grid"}
+    resp = await _client.get(url, params=params)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
     result = []
-    for grid in soup.select("div.teetime-grid"):
-        baan = grid.get("data-baan", "1")
-        sub_course = f"Baan {baan}"
+    for slot_div in soup.select("div.teetime-grid div.btn.teetime"):
+        if "niet-beschikbaar" in (slot_div.get("class") or []):
+            continue
 
-        for slot_div in grid.select("div.btn.teetime"):
-            if "niet-beschikbaar" in (slot_div.get("class") or []):
-                continue
+        vrij = len(slot_div.select("span.icon.vrij"))
+        bezet = len(slot_div.select("span.icon.bezet"))
+        total_slots = vrij + bezet or 4
+        free_slots = vrij
+        if free_slots < players:
+            continue
 
-            vrij = len(slot_div.select("span.icon.vrij"))
-            bezet = len(slot_div.select("span.icon.bezet"))
-            total_slots = vrij + bezet
-            if total_slots == 0:
-                total_slots = 4
+        time_span = slot_div.select_one("span.time")
+        if not time_span:
+            continue
+        time_str = time_span.get_text(strip=True)
+        h, mn = int(time_str[:2]), int(time_str[3:5])
+        local_dt = datetime(parsed.year, parsed.month, parsed.day, h, mn, tzinfo=AMS)
 
-            title = slot_div.get("title", "")
-            m = re.search(r"(\d+)\s+beschikbare", title)
-            free_slots = int(m.group(1)) if m else vrij
-            if free_slots < players:
-                continue
-
-            data_time = slot_div.get("data-time")
-            if data_time:
-                ts = datetime.fromtimestamp(int(data_time), tz=timezone.utc)
-                time_str = ts.astimezone(AMS).strftime("%H:%M")
-            else:
-                time_span = slot_div.select_one("span.time")
-                if not time_span:
-                    continue
-                time_str = time_span.text.strip()
-                h, mn = int(time_str[:2]), int(time_str[3:])
-                local_dt = datetime(parsed_date.year, parsed_date.month, parsed_date.day, h, mn, tzinfo=AMS)
-                ts = local_dt.astimezone(ZoneInfo("UTC"))
-
-            result.append(TeeTime(
-                course=course["name"],
-                sub_course=sub_course,
-                time=time_str,
-                timestamp=ts,
-                holes=holes_param,
-                free_slots=free_slots,
-                total_slots=total_slots,
-                price_eur=None,
-                is_available=True,
-                booking_url=url,
-            ))
+        result.append(TeeTime(
+            course=course["name"],
+            sub_course=baan["sub"],
+            time=time_str,
+            timestamp=local_dt.astimezone(ZoneInfo("UTC")),
+            holes=baan["holes"],
+            free_slots=free_slots,
+            total_slots=total_slots,
+            price_eur=None,
+            is_available=True,
+            booking_url=f"{url}?baan={baan['baan']}&datum={datum}&holes={baan['holes']}&view=grid",
+        ))
 
     return result
 
 
-async def _fetch_course(course: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
-    if course["is_par3"] and not include_par3:
-        return []
-    if not course["is_par3"] and not include_championship:
-        return []
-    holes_to_fetch = [holes] if holes in (9, 18) else [9, 18]
-    sub_results = await asyncio.gather(
-        *[_fetch_course_holes(course, date, players, h, include_par3) for h in holes_to_fetch],
-        return_exceptions=True,
-    )
-    seen: dict[tuple[str, int], TeeTime] = {}
-    for r in sub_results:
-        if not isinstance(r, list):
-            continue
-        for tt in r:
-            key = (tt.time, tt.holes)
-            if key not in seen:
-                seen[key] = tt
-    return list(seen.values())
-
-
 async def fetch_tee_times(date: str, players: int, holes: int | None, include_par3: bool = False, include_championship: bool = True) -> list[TeeTime]:
-    results = await asyncio.gather(
-        *[_fetch_course(c, date, players, holes, include_par3, include_championship) for c in COURSES],
-        return_exceptions=True,
-    )
+    tasks = []
+    for course in COURSES:
+        for baan in course["baans"]:
+            if baan["is_par3"] and not include_par3:
+                continue
+            if not baan["is_par3"] and not include_championship:
+                continue
+            if holes in (9, 18) and baan["holes"] != holes:
+                continue
+            tasks.append(_fetch_baan(course, baan, date, players))
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
     return [tt for r in results if isinstance(r, list) for tt in r]
