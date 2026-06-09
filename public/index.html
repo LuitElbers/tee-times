@@ -1003,9 +1003,15 @@
     }
 
     const cols = Array.from(colMap.values()).sort((a, b) => {
-      const oa = COURSE_ORDER.indexOf(a.course);
-      const ob = COURSE_ORDER.indexOf(b.course);
-      if (oa !== ob) return (oa === -1 ? 999 : oa) - (ob === -1 ? 999 : ob);
+      if (userCoords) {
+        const ka = courseKm(a.course) ?? Infinity;
+        const kb = courseKm(b.course) ?? Infinity;
+        if (ka !== kb) return ka - kb;
+      } else {
+        const oa = COURSE_ORDER.indexOf(a.course);
+        const ob = COURSE_ORDER.indexOf(b.course);
+        if (oa !== ob) return (oa === -1 ? 999 : oa) - (ob === -1 ? 999 : ob);
+      }
       if (a.sub_course !== b.sub_course) return a.sub_course.localeCompare(b.sub_course);
       return a.holes - b.holes;
     });
@@ -1136,6 +1142,7 @@
   }
 
   fetchData();
+  if (!userCoords) openLocModal();
 </script>
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
