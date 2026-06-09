@@ -304,10 +304,97 @@
     flex-shrink: 0;
   }
 
+  #info-btn {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 5px 12px;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  #info-btn:hover { background: #f0f0f0; }
+
+  #info-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  #info-overlay.open { display: flex; }
+
+  #info-card {
+    background: #fff;
+    border-radius: 10px;
+    max-width: 440px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 22px 26px 26px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  }
+
+  #info-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  #info-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  #info-close {
+    font-size: 26px;
+    line-height: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    color: #111;
+    padding: 0 4px;
+  }
+
+  .info-h {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 14px 0 8px;
+  }
+
+  #info-courses {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+  }
+
+  #info-courses li {
+    font-size: 14px;
+    padding: 2px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .info-credit {
+    margin-top: 18px;
+    font-size: 13px;
+    color: #666;
+  }
+
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
     #filters-btn { display: block; }
     #filter-overlay.open { display: flex; }
+    #info-courses { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -356,8 +443,26 @@
       <option value="20:00">20:00</option>
     </select>
   </div>
+  <div class="filter-group desktop-filter">
+    <label for="to-time">Teetime To:</label>
+    <select id="to-time">
+      <option value="09:00">9:00</option>
+      <option value="10:00">10:00</option>
+      <option value="11:00">11:00</option>
+      <option value="12:00">12:00</option>
+      <option value="13:00">13:00</option>
+      <option value="14:00">14:00</option>
+      <option value="15:00">15:00</option>
+      <option value="16:00">16:00</option>
+      <option value="17:00">17:00</option>
+      <option value="18:00">18:00</option>
+      <option value="19:00">19:00</option>
+      <option value="20:00" selected>20:00</option>
+    </select>
+  </div>
   <button id="filters-btn">Filters</button>
   <span id="status"></span>
+  <button id="info-btn">Info</button>
 </div>
 
 <div id="filter-overlay">
@@ -412,8 +517,37 @@
         <option value="20:00">20:00</option>
       </select>
     </div>
+    <div class="m-filter-group">
+      <label class="m-filter-label" for="m-to-time">Teetime To</label>
+      <select id="m-to-time">
+        <option value="09:00">9:00</option>
+        <option value="10:00">10:00</option>
+        <option value="11:00">11:00</option>
+        <option value="12:00">12:00</option>
+        <option value="13:00">13:00</option>
+        <option value="14:00">14:00</option>
+        <option value="15:00">15:00</option>
+        <option value="16:00">16:00</option>
+        <option value="17:00">17:00</option>
+        <option value="18:00">18:00</option>
+        <option value="19:00">19:00</option>
+        <option value="20:00" selected>20:00</option>
+      </select>
+    </div>
   </div>
   <button id="apply-btn">Apply</button>
+</div>
+
+<div id="info-overlay">
+  <div id="info-card">
+    <div id="info-card-header">
+      <span id="info-title">Info</span>
+      <button id="info-close">&#215;</button>
+    </div>
+    <h3 class="info-h">Courses covered</h3>
+    <ul id="info-courses"></ul>
+    <p class="info-credit">Made by Luit Elbers</p>
+  </div>
 </div>
 
 <div id="table-container">
@@ -457,12 +591,16 @@
   let players = 2;
   let holes = 'all';
   let fromTime = '10:00';
+  let toTime = '20:00';
   let includePar3 = false;
   let includeChampionship = true;
 
   // Desktop filter listeners
   const fromTimeSelect = document.getElementById('from-time');
   fromTimeSelect.addEventListener('change', () => { fromTime = fromTimeSelect.value; fetchData(); });
+
+  const toTimeSelect = document.getElementById('to-time');
+  toTimeSelect.addEventListener('change', () => { toTime = toTimeSelect.value; fetchData(); });
 
   const includePar3Checkbox = document.getElementById('include-par3');
   includePar3Checkbox.addEventListener('change', () => { includePar3 = includePar3Checkbox.checked; fetchData(); });
@@ -510,6 +648,7 @@
     document.getElementById('m-include-championship').checked = includeChampionship;
     document.getElementById('m-include-par3').checked = includePar3;
     document.getElementById('m-from-time').value = fromTime;
+    document.getElementById('m-to-time').value = toTime;
   }
 
   const filterOverlay = document.getElementById('filter-overlay');
@@ -533,9 +672,25 @@
     includeChampionship = document.getElementById('m-include-championship').checked;
     includePar3 = document.getElementById('m-include-par3').checked;
     fromTime = document.getElementById('m-from-time').value;
+    toTime = document.getElementById('m-to-time').value;
 
     filterOverlay.classList.remove('open');
     fetchData();
+  });
+
+  // Info modal
+  const infoCourses = document.getElementById('info-courses');
+  [...COURSE_ORDER].sort((a, b) => a.localeCompare(b)).forEach(name => {
+    const li = document.createElement('li');
+    li.textContent = name;
+    infoCourses.appendChild(li);
+  });
+
+  const infoOverlay = document.getElementById('info-overlay');
+  document.getElementById('info-btn').addEventListener('click', () => infoOverlay.classList.add('open'));
+  document.getElementById('info-close').addEventListener('click', () => infoOverlay.classList.remove('open'));
+  infoOverlay.addEventListener('click', e => {
+    if (e.target === infoOverlay) infoOverlay.classList.remove('open');
   });
 
   async function fetchData() {
@@ -602,7 +757,7 @@
       return a.holes - b.holes;
     });
 
-    const timeSet = new Set(data.filter(r => r.time >= fromTime).map(r => r.time));
+    const timeSet = new Set(data.filter(r => r.time >= fromTime && r.time <= toTime).map(r => r.time));
     const times = Array.from(timeSet).sort();
 
     const lookup = new Map();
