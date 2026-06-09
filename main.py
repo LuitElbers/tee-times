@@ -1,7 +1,5 @@
 from datetime import date as date_type
 from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 import asyncio
 from scrapers.teecontrol import fetch_tee_times as tc_fetch
 from scrapers.intogolf import fetch_tee_times as ig_fetch
@@ -13,13 +11,6 @@ from scrapers.rijkvannunspeet import fetch_tee_times as rvn_fetch
 from models import TeeTime
 
 app = FastAPI()
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-@app.get("/")
-async def index():
-    return FileResponse("static/index.html")
 
 
 @app.get("/api/tee-times")
