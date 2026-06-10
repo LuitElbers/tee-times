@@ -245,16 +245,25 @@
   #overlay-body {
     flex: 1;
     overflow-y: auto;
-    padding: 28px 20px;
+    padding: 18px 20px;
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 16px;
   }
 
   .m-filter-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .m-row {
+    display: flex;
+    gap: 14px;
+  }
+
+  .m-row .m-filter-group {
+    flex: 1;
   }
 
   .m-filter-label {
@@ -290,6 +299,32 @@
     outline: none;
     width: 100%;
   }
+
+  .m-dist-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .m-dist-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  #m-distance-input {
+    width: 72px;
+    font-family: inherit;
+    font-size: 15px;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    outline: none;
+  }
+
+  .m-dist-unit { font-size: 15px; color: #333; }
+
+  .m-dist-row #m-loc-btn { flex: 1; }
 
   #apply-btn {
     margin: 16px 20px 28px;
@@ -601,50 +636,51 @@
         Par 3/4
       </label>
     </div>
-    <div class="m-filter-group">
-      <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
-      <select id="m-from-time">
-        <option value="09:00">9:00</option>
-        <option value="10:00" selected>10:00</option>
-        <option value="11:00">11:00</option>
-        <option value="12:00">12:00</option>
-        <option value="13:00">13:00</option>
-        <option value="14:00">14:00</option>
-        <option value="15:00">15:00</option>
-        <option value="16:00">16:00</option>
-        <option value="17:00">17:00</option>
-        <option value="18:00">18:00</option>
-        <option value="19:00">19:00</option>
-        <option value="20:00">20:00</option>
-      </select>
-    </div>
-    <div class="m-filter-group">
-      <label class="m-filter-label" for="m-to-time">Tijd tot</label>
-      <select id="m-to-time">
-        <option value="09:00">9:00</option>
-        <option value="10:00">10:00</option>
-        <option value="11:00">11:00</option>
-        <option value="12:00">12:00</option>
-        <option value="13:00">13:00</option>
-        <option value="14:00">14:00</option>
-        <option value="15:00">15:00</option>
-        <option value="16:00">16:00</option>
-        <option value="17:00">17:00</option>
-        <option value="18:00">18:00</option>
-        <option value="19:00">19:00</option>
-        <option value="20:00" selected>20:00</option>
-      </select>
+    <div class="m-row">
+      <div class="m-filter-group">
+        <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
+        <select id="m-from-time">
+          <option value="09:00">9:00</option>
+          <option value="10:00" selected>10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
+          <option value="18:00">18:00</option>
+          <option value="19:00">19:00</option>
+          <option value="20:00">20:00</option>
+        </select>
+      </div>
+      <div class="m-filter-group">
+        <label class="m-filter-label" for="m-to-time">Tijd tot</label>
+        <select id="m-to-time">
+          <option value="09:00">9:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
+          <option value="18:00">18:00</option>
+          <option value="19:00">19:00</option>
+          <option value="20:00" selected>20:00</option>
+        </select>
+      </div>
     </div>
     <div class="m-filter-group">
       <span class="m-filter-label">Afstand</span>
-      <div class="toggle-group" id="m-distance-group">
-        <button class="toggle-btn active" data-value="any">Any</button>
-        <button class="toggle-btn" data-value="10">10 km</button>
-        <button class="toggle-btn" data-value="25">25 km</button>
-        <button class="toggle-btn" data-value="50">50 km</button>
-        <button class="toggle-btn" data-value="100">100 km</button>
+      <div class="m-dist-row">
+        <div class="m-dist-input-wrap">
+          <input type="number" id="m-distance-input" inputmode="numeric" min="1" placeholder="bijv. 25">
+          <span class="m-dist-unit">km</span>
+        </div>
+        <button id="m-loc-btn" class="toggle-btn">&#128205; Set my location</button>
       </div>
-      <button id="m-loc-btn" class="toggle-btn">&#128205; Set my location</button>
       <span id="m-loc-indicator" style="font-size:13px;color:#2d7a3a"></span>
     </div>
     <div class="m-filter-group">
@@ -821,10 +857,10 @@
   distanceSelect.addEventListener('change', () => onDistanceChange(distanceSelect.value));
 
   function syncDistanceControls(val) {
-    distanceSelect.value = val;
-    document.querySelectorAll('#m-distance-group .toggle-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.value === val);
-    });
+    // val is 'any' or a numeric string. Desktop select only holds preset options.
+    if (val === 'any' || ['10', '25', '50', '100'].includes(val)) distanceSelect.value = val;
+    const mInput = document.getElementById('m-distance-input');
+    if (mInput) mInput.value = val === 'any' ? '' : val;
   }
 
   function onDistanceChange(val) {
@@ -895,7 +931,6 @@
   document.getElementById('loc-go-btn').addEventListener('click', geocodeManual);
   document.getElementById('loc-input').addEventListener('keydown', e => { if (e.key === 'Enter') geocodeManual(); });
   document.getElementById('m-loc-btn').addEventListener('click', openLocModal);
-  setupMobileToggle('m-distance-group');
   updateLocIndicator();
 
   const includePar3Checkbox = document.getElementById('include-par3');
@@ -975,10 +1010,7 @@
     document.getElementById('m-include-par3').checked = includePar3;
     document.getElementById('m-from-time').value = fromTime;
     document.getElementById('m-to-time').value = toTime;
-    const distVal = maxKm === null ? 'any' : String(maxKm);
-    document.querySelectorAll('#m-distance-group .toggle-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.value === distVal);
-    });
+    document.getElementById('m-distance-input').value = maxKm === null ? '' : String(maxKm);
     applyActiveFromSet('#m-landschap-group', landschapFilter);
     applyActiveFromSet('#m-hoogte-group', hoogteFilter);
   }
@@ -1006,10 +1038,10 @@
     fromTime = document.getElementById('m-from-time').value;
     toTime = document.getElementById('m-to-time').value;
 
-    const mDistBtn = document.querySelector('#m-distance-group .toggle-btn.active');
-    const distVal = mDistBtn ? mDistBtn.dataset.value : 'any';
-    maxKm = distVal === 'any' ? null : Number(distVal);
-    syncDistanceControls(distVal);
+    const mDistRaw = document.getElementById('m-distance-input').value.trim();
+    const mDistNum = parseFloat(mDistRaw);
+    maxKm = (mDistRaw === '' || isNaN(mDistNum) || mDistNum <= 0) ? null : mDistNum;
+    syncDistanceControls(maxKm === null ? 'any' : String(maxKm));
 
     landschapFilter.clear();
     document.querySelectorAll('#m-landschap-group .toggle-btn.active').forEach(b => landschapFilter.add(b.dataset.value));
