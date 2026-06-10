@@ -575,13 +575,13 @@
   <div class="filter-group desktop-filter">
     <label for="distance">Afstand:</label>
     <select id="distance">
-      <option value="any" selected>Any</option>
+      <option value="any" selected>Alle</option>
       <option value="10">&#8804; 10 km</option>
       <option value="25">&#8804; 25 km</option>
       <option value="50">&#8804; 50 km</option>
       <option value="100">&#8804; 100 km</option>
     </select>
-    <button id="loc-btn" title="Set your location">&#128205;</button>
+    <button id="loc-btn" title="Locatie instellen">&#128205;</button>
     <span id="loc-indicator"></span>
   </div>
   <div class="filter-group desktop-filter">
@@ -714,15 +714,15 @@
 <div id="loc-overlay">
   <div id="loc-card">
     <div id="info-card-header">
-      <span id="info-title">Your location</span>
+      <span id="info-title">Jouw locatie</span>
       <button id="loc-close">&#215;</button>
     </div>
-    <p class="loc-text">Find courses near you. Share your location, or enter a town or postcode.</p>
-    <button id="loc-gps-btn">Use my location</button>
-    <div class="loc-or">or</div>
+    <p class="loc-text">Vind banen bij jou in de buurt. Deel je locatie, of voer een plaats of postcode in.</p>
+    <button id="loc-gps-btn">Gebruik mijn locatie</button>
+    <div class="loc-or">of</div>
     <div class="loc-manual">
-      <input id="loc-input" type="text" placeholder="Postcode or town, e.g. 1011 AB or Amsterdam">
-      <button id="loc-go-btn">Go</button>
+      <input id="loc-input" type="text" placeholder="Postcode of plaats, bijv. 1011 AB of Amsterdam">
+      <button id="loc-go-btn">Zoek</button>
     </div>
     <p id="loc-status" class="loc-status"></p>
   </div>
@@ -734,9 +734,9 @@
       <span id="info-title">Info</span>
       <button id="info-close">&#215;</button>
     </div>
-    <h3 class="info-h">Courses covered</h3>
+    <h3 class="info-h">Banen</h3>
     <ul id="info-courses"></ul>
-    <p class="info-credit">Made by Luit Elbers</p>
+    <p class="info-credit">Gemaakt door Luit Elbers</p>
   </div>
 </div>
 
@@ -907,11 +907,11 @@
 
   document.getElementById('loc-gps-btn').addEventListener('click', () => {
     const status = document.getElementById('loc-status');
-    if (!navigator.geolocation) { status.textContent = 'Geolocation is not supported here — enter a town or postcode instead.'; return; }
-    status.textContent = 'Locating…';
+    if (!navigator.geolocation) { status.textContent = 'Locatie wordt hier niet ondersteund — voer een plaats of postcode in.'; return; }
+    status.textContent = 'Locatie bepalen…';
     navigator.geolocation.getCurrentPosition(
       pos => setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'My location' }),
-      err => { status.textContent = 'Could not get your location (' + err.message + '). Enter a town or postcode instead.'; },
+      err => { status.textContent = 'Kon je locatie niet bepalen (' + err.message + '). Voer een plaats of postcode in.'; },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
     );
   });
@@ -920,18 +920,18 @@
     const status = document.getElementById('loc-status');
     const q = document.getElementById('loc-input').value.trim();
     if (!q) return;
-    status.textContent = 'Searching…';
+    status.textContent = 'Zoeken…';
     const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=nl&q=' + encodeURIComponent(q);
     let d;
     try {
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      if (!res.ok) throw new Error('lookup failed (' + res.status + ')');
+      if (!res.ok) throw new Error('zoekopdracht mislukt (' + res.status + ')');
       d = await res.json();
     } catch (e) {
-      status.textContent = 'Location lookup failed: ' + e.message;
+      status.textContent = 'Locatie zoeken mislukt: ' + e.message;
       return;
     }
-    if (!d.length) { status.textContent = 'No match found. Try a different town or postcode.'; return; }
+    if (!d.length) { status.textContent = 'Niets gevonden. Probeer een andere plaats of postcode.'; return; }
     setUserCoords({ lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon), label: q });
   }
 
@@ -1082,7 +1082,7 @@
     const container = document.getElementById('table-container');
     const message = document.getElementById('message');
 
-    status.textContent = 'Refreshing...';
+    status.textContent = 'Vernieuwen…';
 
     const params = new URLSearchParams({
       date: dateInput.value,
@@ -1095,13 +1095,13 @@
     let data;
     try {
       const res = await fetch(`/api/tee-times?${params}`);
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      if (!res.ok) throw new Error(`Serverfout ${res.status}`);
       data = await res.json();
     } catch (err) {
       status.textContent = '';
       message.style.display = 'flex';
       message.className = 'error';
-      message.textContent = `Failed to load tee times: ${err.message}`;
+      message.textContent = `Laden van tee times mislukt: ${err.message}`;
       const oldTable = container.querySelector('table');
       if (oldTable) oldTable.remove();
       return;
@@ -1143,7 +1143,7 @@
     if (visible.length === 0) {
       message.style.display = 'flex';
       message.className = '';
-      message.textContent = 'No tee times found for these filters.';
+      message.textContent = 'Geen tee times gevonden voor deze filters.';
       const oldTable = container.querySelector('table');
       if (oldTable) oldTable.remove();
       return;
