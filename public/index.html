@@ -276,6 +276,11 @@
     padding: 9px 20px;
   }
 
+  .m-checkbox-row {
+    display: flex;
+    gap: 28px;
+  }
+
   .m-checkbox-label {
     display: flex;
     align-items: center;
@@ -626,15 +631,17 @@
       </div>
     </div>
     <div class="m-filter-group">
-      <span class="m-filter-label">Course type</span>
-      <label class="m-checkbox-label">
-        <input type="checkbox" id="m-include-championship" checked>
-        Championship
-      </label>
-      <label class="m-checkbox-label">
-        <input type="checkbox" id="m-include-par3">
-        Par 3/4
-      </label>
+      <span class="m-filter-label">Baan type</span>
+      <div class="m-checkbox-row">
+        <label class="m-checkbox-label">
+          <input type="checkbox" id="m-include-championship" checked>
+          Championship
+        </label>
+        <label class="m-checkbox-label">
+          <input type="checkbox" id="m-include-par3">
+          Par 3/4
+        </label>
+      </div>
     </div>
     <div class="m-row">
       <div class="m-filter-group">
@@ -679,7 +686,7 @@
           <input type="number" id="m-distance-input" inputmode="numeric" min="1" placeholder="bijv. 25">
           <span class="m-dist-unit">km</span>
         </div>
-        <button id="m-loc-btn" class="toggle-btn">&#128205; Set my location</button>
+        <button id="m-loc-btn" class="toggle-btn">&#128205; Locatie instellen</button>
       </div>
       <span id="m-loc-indicator" style="font-size:13px;color:#2d7a3a"></span>
     </div>
@@ -701,7 +708,7 @@
       </div>
     </div>
   </div>
-  <button id="apply-btn">Apply</button>
+  <button id="apply-btn">Toepassen</button>
 </div>
 
 <div id="loc-overlay">
