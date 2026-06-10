@@ -474,11 +474,11 @@
 
 <div id="filter-bar">
   <div class="filter-group">
-    <label for="date-input">Date:</label>
+    <label for="date-input">Datum:</label>
     <input type="date" id="date-input">
   </div>
   <div class="filter-group desktop-filter">
-    <label>Players:</label>
+    <label>Spelers:</label>
     <div class="toggle-group" id="players-group">
       <button class="toggle-btn" data-value="1">1</button>
       <button class="toggle-btn active" data-value="2">2</button>
@@ -499,7 +499,7 @@
     <label><input type="checkbox" id="include-par3"> Par 3/4</label>
   </div>
   <div class="filter-group desktop-filter">
-    <label for="from-time">Teetime From:</label>
+    <label for="from-time">Tijd vanaf:</label>
     <select id="from-time">
       <option value="09:00">9:00</option>
       <option value="10:00" selected>10:00</option>
@@ -516,7 +516,7 @@
     </select>
   </div>
   <div class="filter-group desktop-filter">
-    <label for="to-time">Teetime To:</label>
+    <label for="to-time">Tijd tot:</label>
     <select id="to-time">
       <option value="09:00">9:00</option>
       <option value="10:00">10:00</option>
@@ -533,7 +533,7 @@
     </select>
   </div>
   <div class="filter-group desktop-filter">
-    <label for="distance">Distance:</label>
+    <label for="distance">Afstand:</label>
     <select id="distance">
       <option value="any" selected>Any</option>
       <option value="10">&#8804; 10 km</option>
@@ -574,7 +574,7 @@
   </div>
   <div id="overlay-body">
     <div class="m-filter-group">
-      <span class="m-filter-label">Players</span>
+      <span class="m-filter-label">Spelers</span>
       <div class="toggle-group" id="m-players-group">
         <button class="toggle-btn" data-value="1">1</button>
         <button class="toggle-btn active" data-value="2">2</button>
@@ -602,7 +602,7 @@
       </label>
     </div>
     <div class="m-filter-group">
-      <label class="m-filter-label" for="m-from-time">Teetime From</label>
+      <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
       <select id="m-from-time">
         <option value="09:00">9:00</option>
         <option value="10:00" selected>10:00</option>
@@ -619,7 +619,7 @@
       </select>
     </div>
     <div class="m-filter-group">
-      <label class="m-filter-label" for="m-to-time">Teetime To</label>
+      <label class="m-filter-label" for="m-to-time">Tijd tot</label>
       <select id="m-to-time">
         <option value="09:00">9:00</option>
         <option value="10:00">10:00</option>
@@ -636,7 +636,7 @@
       </select>
     </div>
     <div class="m-filter-group">
-      <span class="m-filter-label">Distance</span>
+      <span class="m-filter-label">Afstand</span>
       <div class="toggle-group" id="m-distance-group">
         <button class="toggle-btn active" data-value="any">Any</button>
         <button class="toggle-btn" data-value="10">10 km</button>
@@ -1165,7 +1165,7 @@
     const tr1 = document.createElement('tr');
     const thTime = document.createElement('th');
     thTime.rowSpan = 2;
-    thTime.textContent = 'Time';
+    thTime.textContent = 'Tijd';
     thTime.className = 'th-time';
     tr1.appendChild(thTime);
 
