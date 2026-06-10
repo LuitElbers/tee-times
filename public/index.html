@@ -26,7 +26,8 @@
     padding: 10px 16px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 14px 20px;
+    flex-wrap: wrap;
     flex-shrink: 0;
   }
 
@@ -404,6 +405,15 @@
 
   .th-km { font-weight: 400; font-size: 11px; opacity: 0.85; }
 
+  .th-tags {
+    font-weight: 400;
+    font-size: 10px;
+    opacity: 0.85;
+    margin-top: 3px;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
   #info-card-header {
     display: flex;
     align-items: center;
@@ -534,6 +544,23 @@
     <button id="loc-btn" title="Set your location">&#128205;</button>
     <span id="loc-indicator"></span>
   </div>
+  <div class="filter-group desktop-filter">
+    <label>Landschap:</label>
+    <div class="toggle-group" id="landschap-group">
+      <button class="toggle-btn" data-value="polder">Polder</button>
+      <button class="toggle-btn" data-value="duinen">Duinen</button>
+      <button class="toggle-btn" data-value="bos">Bos</button>
+      <button class="toggle-btn" data-value="heide">Heide</button>
+    </div>
+  </div>
+  <div class="filter-group desktop-filter">
+    <label>Hoogteverschil:</label>
+    <div class="toggle-group" id="hoogte-group">
+      <button class="toggle-btn" data-value="plat">Plat</button>
+      <button class="toggle-btn" data-value="glooiend">Glooiend</button>
+      <button class="toggle-btn" data-value="heuvelachtig">Heuvelachtig</button>
+    </div>
+  </div>
   <button id="filters-btn">Filters</button>
   <span id="status"></span>
   <button id="info-btn">Info</button>
@@ -620,6 +647,23 @@
       <button id="m-loc-btn" class="toggle-btn">&#128205; Set my location</button>
       <span id="m-loc-indicator" style="font-size:13px;color:#2d7a3a"></span>
     </div>
+    <div class="m-filter-group">
+      <span class="m-filter-label">Landschap</span>
+      <div class="toggle-group" id="m-landschap-group" style="flex-wrap:wrap">
+        <button class="toggle-btn" data-value="polder">Polder</button>
+        <button class="toggle-btn" data-value="duinen">Duinen</button>
+        <button class="toggle-btn" data-value="bos">Bos</button>
+        <button class="toggle-btn" data-value="heide">Heide</button>
+      </div>
+    </div>
+    <div class="m-filter-group">
+      <span class="m-filter-label">Hoogteverschil</span>
+      <div class="toggle-group" id="m-hoogte-group" style="flex-wrap:wrap">
+        <button class="toggle-btn" data-value="plat">Plat</button>
+        <button class="toggle-btn" data-value="glooiend">Glooiend</button>
+        <button class="toggle-btn" data-value="heuvelachtig">Heuvelachtig</button>
+      </div>
+    </div>
   </div>
   <button id="apply-btn">Apply</button>
 </div>
@@ -697,6 +741,30 @@
     "Rijk van Nunspeet":  { lat: 52.36771, lon: 5.79827 },
   };
 
+  // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
+  // landschap: polder | duinen | bos | heide (a course can have several). hoogte: plat | glooiend | heuvelachtig.
+  const COURSE_TAGS = {
+    "Hoge Dijk":          { landschap: ["polder"],         hoogte: "plat" },
+    "Waterland":          { landschap: ["polder"],         hoogte: "plat" },
+    "Spaarnwoude":        { landschap: ["polder", "bos"],  hoogte: "plat" },
+    "Wilnis":             { landschap: ["polder"],         hoogte: "glooiend" },
+    "De Purmer":          { landschap: ["polder"],         hoogte: "plat" },
+    "Zaanse":             { landschap: ["polder"],         hoogte: "plat" },
+    "Amsteldijk":         { landschap: ["polder"],         hoogte: "plat" },
+    "Liemeer":            { landschap: ["polder"],         hoogte: "plat" },
+    "Heemskerk":          { landschap: ["polder"],         hoogte: "plat" },
+    "Bergvliet":          { landschap: ["bos", "heide"],   hoogte: "glooiend" },
+    "Haenen":             { landschap: ["bos", "heide"],   hoogte: "glooiend" },
+    "De Loonsche Duynen": { landschap: ["bos"],            hoogte: "glooiend" },
+    "Rijk van Nunspeet":  { landschap: ["bos", "heide"],   hoogte: "heuvelachtig" },
+  };
+
+  function courseTagLabel(courseName) {
+    const t = COURSE_TAGS[courseName];
+    if (!t) return '';
+    return [...t.landschap, t.hoogte].join(' · ');
+  }
+
   function haversineKm(a, b) {
     const R = 6371;
     const dLat = (b.lat - a.lat) * Math.PI / 180;
@@ -733,6 +801,8 @@
   let maxKm = null;        // null = Any distance
   let userCoords = null;   // { lat, lon, label }
   let lastData = null;     // most recent server response, for client-side re-filtering
+  const landschapFilter = new Set();  // empty = no landscape filter (all included)
+  const hoogteFilter = new Set();     // empty = no elevation filter (all included)
 
   try {
     const saved = JSON.parse(localStorage.getItem('userCoords'));
@@ -849,6 +919,36 @@
   setupToggle('holes-group',   v => { holes   = v; fetchData(); });
   dateInput.addEventListener('change', fetchData);
 
+  // Multi-select toggle groups for landscape/elevation (any number active).
+  function applyActiveFromSet(groupSelector, set) {
+    document.querySelectorAll(groupSelector + ' .toggle-btn').forEach(b => {
+      b.classList.toggle('active', set.has(b.dataset.value));
+    });
+  }
+
+  function setupDesktopMultiToggle(groupId, set) {
+    document.getElementById(groupId).addEventListener('click', e => {
+      const btn = e.target.closest('.toggle-btn');
+      if (!btn) return;
+      const v = btn.dataset.value;
+      if (set.has(v)) set.delete(v); else set.add(v);
+      btn.classList.toggle('active');
+      applyFilters();
+    });
+  }
+
+  function setupMobileMultiToggle(groupId) {
+    document.getElementById(groupId).addEventListener('click', e => {
+      const btn = e.target.closest('.toggle-btn');
+      if (btn) btn.classList.toggle('active');
+    });
+  }
+
+  setupDesktopMultiToggle('landschap-group', landschapFilter);
+  setupDesktopMultiToggle('hoogte-group', hoogteFilter);
+  setupMobileMultiToggle('m-landschap-group');
+  setupMobileMultiToggle('m-hoogte-group');
+
   // Mobile toggle groups (update active state only, no fetch)
   function setupMobileToggle(groupId) {
     const group = document.getElementById(groupId);
@@ -879,6 +979,8 @@
     document.querySelectorAll('#m-distance-group .toggle-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.value === distVal);
     });
+    applyActiveFromSet('#m-landschap-group', landschapFilter);
+    applyActiveFromSet('#m-hoogte-group', hoogteFilter);
   }
 
   const filterOverlay = document.getElementById('filter-overlay');
@@ -908,6 +1010,13 @@
     const distVal = mDistBtn ? mDistBtn.dataset.value : 'any';
     maxKm = distVal === 'any' ? null : Number(distVal);
     syncDistanceControls(distVal);
+
+    landschapFilter.clear();
+    document.querySelectorAll('#m-landschap-group .toggle-btn.active').forEach(b => landschapFilter.add(b.dataset.value));
+    hoogteFilter.clear();
+    document.querySelectorAll('#m-hoogte-group .toggle-btn.active').forEach(b => hoogteFilter.add(b.dataset.value));
+    applyActiveFromSet('#landschap-group', landschapFilter);
+    applyActiveFromSet('#hoogte-group', hoogteFilter);
 
     filterOverlay.classList.remove('open');
     fetchData();
@@ -975,6 +1084,20 @@
       visible = visible.filter(r => {
         const km = courseKm(r.course);
         return km !== null && km <= maxKm;
+      });
+    }
+
+    if (landschapFilter.size > 0) {
+      visible = visible.filter(r => {
+        const t = COURSE_TAGS[r.course];
+        return t && t.landschap.some(l => landschapFilter.has(l));
+      });
+    }
+
+    if (hoogteFilter.size > 0) {
+      visible = visible.filter(r => {
+        const t = COURSE_TAGS[r.course];
+        return t && hoogteFilter.has(t.hoogte);
       });
     }
 
@@ -1056,6 +1179,13 @@
         kmSpan.className = 'th-km';
         kmSpan.textContent = ' · ' + Math.round(km) + ' km';
         th.appendChild(kmSpan);
+      }
+      const tagLabel = courseTagLabel(grp.course);
+      if (tagLabel) {
+        const tagDiv = document.createElement('div');
+        tagDiv.className = 'th-tags';
+        tagDiv.textContent = tagLabel;
+        th.appendChild(tagDiv);
       }
       th.className = 'th-course';
       const colors = COURSE_COLORS[grp.course] || { main: '#444', sub: '#666' };
