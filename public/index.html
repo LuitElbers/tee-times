@@ -111,12 +111,6 @@
     min-width: 100%;
   }
 
-  thead {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-  }
-
   th, td {
     border: 1px solid #ccc;
     padding: 0;
@@ -129,6 +123,9 @@
     text-align: center;
     padding: 6px 10px;
     white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 5;
   }
 
   .th-sub {
@@ -137,6 +134,9 @@
     text-align: center;
     padding: 5px 8px;
     white-space: nowrap;
+    position: sticky;
+    top: 46px;
+    z-index: 5;
   }
 
   .th-time {
@@ -147,6 +147,10 @@
     padding: 6px 8px;
     width: 65px;
     min-width: 65px;
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 6;
   }
 
   .td-time {
