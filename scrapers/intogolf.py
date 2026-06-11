@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, date as date_type
 from zoneinfo import ZoneInfo
 import httpx
@@ -18,11 +19,37 @@ CLUBS = [
         "course_name": "Zaanse",
         "booking_url": "https://zaanse.golfer.intogolf.nl/#/teetimes",
     },
+    {"api_url": "https://vlietlanden.baan.intogolf.nl/api/igg", "course_name": "De Vlietlanden", "booking_url": "https://vlietlanden.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://sluispolder.baan.intogolf.nl/api/igg", "course_name": "Sluispolder", "booking_url": "https://sluispolder.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://ooghduyne.baan.intogolf.nl/api/igg", "course_name": "Ooghduyne", "booking_url": "https://ooghduyne.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://rijswijkse.baan.intogolf.nl/api/igg", "course_name": "Rijswijkse", "booking_url": "https://rijswijkse.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://crayestein.baan.intogolf.nl/api/igg", "course_name": "Crayestein", "booking_url": "https://crayestein.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://duinzicht.baan.intogolf.nl/api/igg", "course_name": "Duinzicht", "booking_url": "https://duinzicht.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://leeuwenbergh.baan.intogolf.nl/api/igg", "course_name": "Leeuwenbergh", "booking_url": "https://leeuwenbergh.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://cromstrijen.baan.intogolf.nl/api/igg", "course_name": "Cromstrijen", "booking_url": "https://cromstrijen.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://goese.baan.intogolf.nl/api/igg", "course_name": "De Goese Golf", "booking_url": "https://goese.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://grevelingenhout.baan.intogolf.nl/api/igg", "course_name": "Grevelingenhout", "booking_url": "https://grevelingenhout.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://zeeuwsche.baan.intogolf.nl/api/igg", "course_name": "De Zeeuwsche", "booking_url": "https://zeeuwsche.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://kroonprins.baan.intogolf.nl/api/igg", "course_name": "De Kroonprins", "booking_url": "https://kroonprins.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://dronten.baan.intogolf.nl/api/igg", "course_name": "Golf Residentie Dronten", "booking_url": "https://dronten.golfer.intogolf.nl/#/teetimes"},
 ]
 
 
+def _parse_green_fee(raw) -> float | None:
+    # Some clubs return a scalar price; others a list of fee objects with a "price" key.
+    if not raw:
+        return None
+    if isinstance(raw, list):
+        prices = [float(x["price"]) for x in raw if isinstance(x, dict) and x.get("price")]
+        return min(prices) if prices else None
+    return float(raw)
+
+
 def _is_par3_course(name: str) -> bool:
-    return "par 3" in name.lower() or "par3" in name.lower()
+    n = name.lower()
+    if "par 3" in n or "par3" in n or "par-3" in n:
+        return True
+    return bool(re.search(r"\bp3\b", n))
 
 
 async def _fetch_club(club: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
@@ -73,7 +100,7 @@ async def _fetch_club(club: dict, date: str, players: int, holes: int | None, in
                     holes=h,
                     free_slots=free_slots,
                     total_slots=max_players,
-                    price_eur=float(raw_price) if raw_price else None,
+                    price_eur=_parse_green_fee(raw_price),
                     is_available=True,
                     booking_url=club["booking_url"],
                 )

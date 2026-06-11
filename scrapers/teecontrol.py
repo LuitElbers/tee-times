@@ -6,7 +6,44 @@ from models import TeeTime
 
 _client = httpx.AsyncClient(timeout=15.0)
 
-_token_cache: TTLCache = TTLCache(maxsize=10, ttl=55 * 60)
+# api.teecontrol.com enforces a per-IP request-RATE limit (a single request is
+# fine; any real concurrent fan-out 429s). Only a global throttle (min gap between
+# request starts) reliably serves all 20 clubs. Tokens cache 55min and a 60s
+# response cache makes warm calls instant, so only the first cold call per minute
+# pays the full serial cost. Retry 429s with backoff as a safety net.
+# NOTE: cold-start latency ~25-35s for 20 clubs — known perf issue, optimize later.
+_MIN_INTERVAL = 0.1
+_rate_lock = asyncio.Lock()
+_next_slot = 0.0
+_resp_cache: TTLCache = TTLCache(maxsize=512, ttl=60)
+_token_cache: TTLCache = TTLCache(maxsize=64, ttl=55 * 60)
+
+
+async def _throttle() -> None:
+    global _next_slot
+    async with _rate_lock:
+        now = asyncio.get_event_loop().time()
+        wait = _next_slot - now
+        if wait > 0:
+            await asyncio.sleep(wait)
+        _next_slot = max(now, _next_slot) + _MIN_INTERVAL
+
+
+async def _get(url: str, *, params=None, headers=None, cache_key: str | None = None, retries: int = 6):
+    if cache_key is not None and cache_key in _resp_cache:
+        return _resp_cache[cache_key]
+    for attempt in range(retries):
+        await _throttle()
+        resp = await _client.get(url, params=params, headers=headers)
+        if resp.status_code == 429 and attempt < retries - 1:
+            await asyncio.sleep(0.5 * (2 ** attempt))
+            continue
+        resp.raise_for_status()
+        data = resp.json()
+        if cache_key is not None:
+            _resp_cache[cache_key] = data
+        return data
+    resp.raise_for_status()
 
 COURSES = [
     {
@@ -29,6 +66,22 @@ COURSES = [
         "course_name": "Bergvliet",
         "booking_url": "https://bergvliet.teecontrol.com/book",
     },
+    {"origin": "https://dirkshorn.teecontrol.com", "course_name": "Dirkshorn", "booking_url": "https://dirkshorn.teecontrol.com/book"},
+    {"origin": "https://haarlemmermeersche.teecontrol.com", "course_name": "Haarlemmermeersche", "booking_url": "https://haarlemmermeersche.teecontrol.com/book"},
+    {"origin": "https://golfpark-spandersbosch.teecontrol.com", "course_name": "Spandersbosch", "booking_url": "https://golfpark-spandersbosch.teecontrol.com/book"},
+    {"origin": "https://kralingen.teecontrol.com", "course_name": "Kralingen", "booking_url": "https://kralingen.teecontrol.com/book"},
+    {"origin": "https://bentwoud.teecontrol.com", "course_name": "Bentwoud", "booking_url": "https://bentwoud.teecontrol.com/book"},
+    {"origin": "https://zeegersloot.teecontrol.com", "course_name": "Zeegersloot", "booking_url": "https://zeegersloot.teecontrol.com/book"},
+    {"origin": "https://dehoogerotterdamsche.teecontrol.com", "course_name": "De Hooge Rotterdamsche", "booking_url": "https://dehoogerotterdamsche.teecontrol.com/book"},
+    {"origin": "https://hitland.teecontrol.com", "course_name": "Hitland", "booking_url": "https://hitland.teecontrol.com/book"},
+    {"origin": "https://zeewolde.teecontrol.com", "course_name": "Zeewolde", "booking_url": "https://zeewolde.teecontrol.com/book"},
+    {"origin": "https://harderwold.teecontrol.com", "course_name": "Harderwold", "booking_url": "https://harderwold.teecontrol.com/book"},
+    {"origin": "https://emmeloord.teecontrol.com", "course_name": "Emmeloord", "booking_url": "https://emmeloord.teecontrol.com/book"},
+    {"origin": "https://gulbergen.teecontrol.com", "course_name": "De Gulbergen", "booking_url": "https://gulbergen.teecontrol.com/book"},
+    {"origin": "https://nieuwkerk.teecontrol.com", "course_name": "Landgoed Nieuwkerk", "booking_url": "https://nieuwkerk.teecontrol.com/book"},
+    {"origin": "https://heelsum.teecontrol.com", "course_name": "Heelsum", "booking_url": "https://heelsum.teecontrol.com/book"},
+    {"origin": "https://welderen.teecontrol.com", "course_name": "Welderen", "booking_url": "https://welderen.teecontrol.com/book"},
+    {"origin": "https://prise-deau.teecontrol.com", "course_name": "Prise d'Eau", "booking_url": "https://prise-deau.teecontrol.com/book"},
 ]
 
 API_BASE = "https://api.teecontrol.com"
@@ -51,15 +104,18 @@ SHORT_COURSES = {
     "Abcoudebaan", "A-holes", "B-holes", "F-holes",
     # Liemeer: Bovenlandenbaan is par 3/4; is_par_three=False is correct, but still needs filtering
     "9 holes - par 3/4", "18 holes - par 3/4",
+    # Welderen: par 3/4 course, is_par_three=False (note the double space in the 9-hole name)
+    "Par 3-4  9 holes", "Par 3-4 18 holes",
+    # Bentwoud: Noordwoud is par 3/4, is_par_three=False
+    "Noordwoud (Par 3/4)", "Dagkaart Par 3/4 Noordwoud",
 }
 
 
 async def _get_token(origin: str) -> str:
     if origin in _token_cache:
         return _token_cache[origin]
-    resp = await _client.get(f"{API_BASE}/auth/guest", headers={"Origin": origin})
-    resp.raise_for_status()
-    token = resp.json()["token"]
+    data = await _get(f"{API_BASE}/auth/guest", headers={"Origin": origin})
+    token = data["token"]
     _token_cache[origin] = token
     return token
 
@@ -75,13 +131,12 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
     token = await _get_token(origin)
     headers = {"Authorization": f"Guest {token}", "Origin": origin}
 
-    sets_resp = await _client.get(
+    sets = await _get(
         f"{API_BASE}/sets",
         params={"can_book_at": date},
         headers=headers,
+        cache_key=f"sets:{origin}:{date}",
     )
-    sets_resp.raise_for_status()
-    sets = sets_resp.json()
 
     filtered_sets = []
     for s in sets:
@@ -98,7 +153,7 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
         filtered_sets.append(s)
 
     async def _fetch_set(s: dict) -> list[TeeTime]:
-        resp = await _client.get(
+        items = await _get(
             f"{API_BASE}/start-times",
             params={
                 "date": date,
@@ -108,9 +163,8 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
                 "with_unavailable": 0,
             },
             headers=headers,
+            cache_key=f"st:{origin}:{date}:{players}:{s['uuid']}",
         )
-        resp.raise_for_status()
-        items = resp.json()
         result = []
         for item in items:
             if not item.get("is_available"):

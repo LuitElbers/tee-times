@@ -13,6 +13,20 @@ from models import TeeTime
 
 app = FastAPI()
 
+# Cap each backend so one slow/rate-limited backend (teecontrol) can't block the
+# whole response. A timed-out backend returns nothing this request; its short-TTL
+# response cache warms over subsequent loads so its courses fill in. 8s keeps the
+# worst-case response under Vercel's default 10s function limit.
+BACKEND_TIMEOUT = 8.0
+
+
+async def _run_backend(coro):
+    try:
+        return await asyncio.wait_for(coro, BACKEND_TIMEOUT)
+    except asyncio.TimeoutError:
+        print(f"WARNING: backend timed out after {BACKEND_TIMEOUT}s; returning partial results")
+        return []
+
 
 @app.get("/")
 async def index():
@@ -42,7 +56,7 @@ async def get_tee_times(
         rvn_fetch(date, players, holes_int, include_par3, include_championship),
     ]
 
-    all_results = await asyncio.gather(*scrapers, return_exceptions=True)
+    all_results = await asyncio.gather(*[_run_backend(s) for s in scrapers], return_exceptions=True)
 
     results: list[TeeTime] = [
         tt for r in all_results
