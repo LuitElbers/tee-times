@@ -351,7 +351,7 @@
     flex-shrink: 0;
   }
 
-  #info-btn {
+  #info-btn, #banen-btn {
     font-family: inherit;
     font-size: 14px;
     padding: 5px 12px;
@@ -363,9 +363,9 @@
     white-space: nowrap;
   }
 
-  #info-btn:hover { background: #f0f0f0; }
+  #info-btn:hover, #banen-btn:hover { background: #f0f0f0; }
 
-  #info-overlay, #loc-overlay {
+  #info-overlay, #loc-overlay, #banen-overlay {
     display: none;
     position: fixed;
     inset: 0;
@@ -376,9 +376,9 @@
     padding: 20px;
   }
 
-  #info-overlay.open, #loc-overlay.open { display: flex; }
+  #info-overlay.open, #loc-overlay.open, #banen-overlay.open { display: flex; }
 
-  #info-card, #loc-card {
+  #info-card, #loc-card, #banen-card {
     background: #fff;
     border-radius: 10px;
     max-width: 440px;
@@ -388,6 +388,8 @@
     padding: 22px 26px 26px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.25);
   }
+
+  #banen-card { max-width: 600px; }
 
   #loc-btn {
     font-family: inherit;
@@ -508,6 +510,43 @@
     color: #666;
   }
 
+  .banen-intro { font-size: 13px; color: #666; margin: 4px 0 14px; line-height: 1.4; }
+
+  #banen-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+  #banen-table th {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 2px solid #ddd;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    background: #fff;
+  }
+
+  #banen-table th:hover { background: #eaeaea; }
+  #banen-table th .arr { font-size: 10px; color: #999; margin-left: 3px; }
+  #banen-table th.active .arr { color: #2d7a3a; }
+
+  #banen-table td { padding: 3px 8px; }
+  #banen-table tbody tr:nth-child(even) { background: #f5f5f5; }
+  #banen-table td.col-name { font-weight: 600; }
+  #banen-table td.col-afstand { text-align: right; white-space: nowrap; color: #555; }
+  #banen-table td.col-landschap, #banen-table td.col-hoogte { text-transform: capitalize; color: #555; }
+  #banen-table td.col-select { text-align: center; width: 1%; }
+
+  #banen-table input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #2d7a3a;
+    vertical-align: middle;
+  }
+
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
     #filters-btn { display: block; }
@@ -609,6 +648,7 @@
   </div>
   <button id="filters-btn">Filters</button>
   <span id="status"></span>
+  <button id="banen-btn">Banen</button>
   <button id="info-btn">Info</button>
 </div>
 
@@ -743,6 +783,17 @@
     <h3 class="info-h">Banen</h3>
     <ul id="info-courses"></ul>
     <p class="info-credit">Gemaakt door Luit Elbers</p>
+  </div>
+</div>
+
+<div id="banen-overlay">
+  <div id="banen-card">
+    <div id="info-card-header">
+      <span id="info-title">Banen</span>
+      <button id="banen-close">&#215;</button>
+    </div>
+    <p class="banen-intro">Vink banen uit die je niet wilt zien. Standaard staan alle banen aan. Afstand verschijnt zodra je je locatie hebt ingesteld.</p>
+    <div id="banen-list"></div>
   </div>
 </div>
 
@@ -945,11 +996,19 @@
   let lastData = null;     // most recent server response, for client-side re-filtering
   const landschapFilter = new Set();  // empty = no landscape filter (all included)
   const hoogteFilter = new Set();     // empty = no elevation filter (all included)
+  // Per-device course opt-outs. We store EXCLUSIONS, so default (empty) = all on and
+  // newly added courses are included automatically without any migration.
+  const excludedCourses = new Set();
 
   try {
     const saved = JSON.parse(localStorage.getItem('userCoords'));
     if (saved && typeof saved.lat === 'number' && typeof saved.lon === 'number') userCoords = saved;
   } catch (e) { /* no/invalid saved location */ }
+
+  try {
+    const savedEx = JSON.parse(localStorage.getItem('excludedCourses'));
+    if (Array.isArray(savedEx)) savedEx.forEach(c => excludedCourses.add(c));
+  } catch (e) { /* no/invalid saved exclusions */ }
 
   // Desktop filter listeners
   const fromTimeSelect = document.getElementById('from-time');
@@ -1176,6 +1235,124 @@
     if (e.target === infoOverlay) infoOverlay.classList.remove('open');
   });
 
+  // Banen modal — per-device course selection
+  const banenOverlay = document.getElementById('banen-overlay');
+  const banenList = document.getElementById('banen-list');
+
+  function saveExclusions() {
+    try { localStorage.setItem('excludedCourses', JSON.stringify([...excludedCourses])); } catch (e) { /* storage unavailable */ }
+  }
+
+  const HOOGTE_ORDER = { plat: 0, glooiend: 1, heuvelachtig: 2 };
+  const BANEN_COLS = [
+    { key: 'select',  label: 'Select' },
+    { key: 'naam',    label: 'Naam' },
+    { key: 'afstand', label: 'Afstand' },
+    { key: 'landschap', label: 'Landschap' },
+    { key: 'hoogte',  label: 'Hoogteverschil' },
+  ];
+  let banenSortKey = 'naam';
+  let banenSortAsc = true;
+
+  function banenSortValue(name, key) {
+    const t = COURSE_TAGS[name];
+    switch (key) {
+      case 'select':    return excludedCourses.has(name) ? 1 : 0;  // included first
+      case 'afstand':   { const km = courseKm(name); return km === null ? Infinity : km; }
+      case 'landschap': return t ? t.landschap.join(' · ') : '';
+      case 'hoogte':    return t ? (HOOGTE_ORDER[t.hoogte] ?? 99) : 99;
+      default:          return name;  // naam
+    }
+  }
+
+  function renderBanenList() {
+    const names = [...COURSE_ORDER].sort((a, b) => {
+      let va = banenSortValue(a, banenSortKey);
+      let vb = banenSortValue(b, banenSortKey);
+      let cmp = typeof va === 'string' ? va.localeCompare(vb) : (va - vb);
+      if (cmp === 0) cmp = a.localeCompare(b);  // stable tiebreak by name
+      return banenSortAsc ? cmp : -cmp;
+    });
+
+    const table = document.createElement('table');
+    table.id = 'banen-table';
+
+    const thead = document.createElement('thead');
+    const htr = document.createElement('tr');
+    BANEN_COLS.forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col.label;
+      if (col.key === banenSortKey) {
+        th.className = 'active';
+        const arr = document.createElement('span');
+        arr.className = 'arr';
+        arr.textContent = banenSortAsc ? '▲' : '▼';
+        th.appendChild(arr);
+      }
+      th.addEventListener('click', () => {
+        if (banenSortKey === col.key) banenSortAsc = !banenSortAsc;
+        else { banenSortKey = col.key; banenSortAsc = true; }
+        renderBanenList();
+      });
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    names.forEach(name => {
+      const t = COURSE_TAGS[name];
+      const km = courseKm(name);
+      const tr = document.createElement('tr');
+
+      const selTd = document.createElement('td');
+      selTd.className = 'col-select';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !excludedCourses.has(name);
+      cb.addEventListener('change', () => {
+        if (cb.checked) excludedCourses.delete(name);
+        else excludedCourses.add(name);
+        saveExclusions();
+        applyFilters();
+        if (banenSortKey === 'select') renderBanenList();
+      });
+      selTd.appendChild(cb);
+
+      const nameTd = document.createElement('td');
+      nameTd.className = 'col-name';
+      nameTd.textContent = name;
+
+      const distTd = document.createElement('td');
+      distTd.className = 'col-afstand';
+      distTd.textContent = km === null ? '–' : Math.round(km) + ' km';
+
+      const landTd = document.createElement('td');
+      landTd.className = 'col-landschap';
+      landTd.textContent = t ? t.landschap.join(' · ') : '';
+
+      const hoogteTd = document.createElement('td');
+      hoogteTd.className = 'col-hoogte';
+      hoogteTd.textContent = t ? t.hoogte : '';
+
+      tr.append(selTd, nameTd, distTd, landTd, hoogteTd);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    banenList.innerHTML = '';
+    banenList.appendChild(table);
+  }
+
+  document.getElementById('banen-btn').addEventListener('click', () => {
+    renderBanenList();
+    banenOverlay.classList.add('open');
+  });
+  document.getElementById('banen-close').addEventListener('click', () => banenOverlay.classList.remove('open'));
+  banenOverlay.addEventListener('click', e => {
+    if (e.target === banenOverlay) banenOverlay.classList.remove('open');
+  });
+
   async function fetchData() {
     const status = document.getElementById('status');
     const container = document.getElementById('table-container');
@@ -1217,6 +1394,10 @@
     if (!lastData) return;
 
     let visible = lastData.filter(r => r.time >= fromTime && r.time <= toTime);
+
+    if (excludedCourses.size > 0) {
+      visible = visible.filter(r => !excludedCourses.has(r.course));
+    }
 
     if (maxKm !== null && userCoords) {
       visible = visible.filter(r => {
