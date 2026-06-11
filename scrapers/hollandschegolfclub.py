@@ -15,6 +15,18 @@ BOOKING_URL = "https://www.hollandschegolfclub.nl/boek-een-starttijd/"
 LOCATIONS = [
     {"id": 153, "name": "De Purmer"},
     {"id": 141, "name": "De Loonsche Duynen"},
+    {"id": 154, "name": "Westerpark"},
+    {"id": 151, "name": "De Haverleij"},
+    {"id": 157, "name": "Gendersteyn"},
+    {"id": 107, "name": "Almkreek"},
+    {"id": 148, "name": "De Kurenpolder"},
+    {"id": 159, "name": "Reymerswael"},
+    {"id": 155, "name": "De Berendonck"},
+    {"id": 104, "name": "De Breuninkhof"},
+    {"id": 158, "name": "Land van Thorn"},
+    {"id": 156, "name": "Sint Nyk"},
+    {"id": 152, "name": "BurgGolf Rotterdam"},
+    {"id": 149, "name": "Shortgolf Utrecht"},
 ]
 
 _nonce_cache: dict = {}
