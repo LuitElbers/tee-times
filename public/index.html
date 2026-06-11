@@ -351,7 +351,7 @@
     flex-shrink: 0;
   }
 
-  #info-btn, #banen-btn {
+  #banen-btn {
     font-family: inherit;
     font-size: 14px;
     padding: 5px 12px;
@@ -363,9 +363,9 @@
     white-space: nowrap;
   }
 
-  #info-btn:hover, #banen-btn:hover { background: #f0f0f0; }
+  #banen-btn:hover { background: #f0f0f0; }
 
-  #info-overlay, #loc-overlay, #banen-overlay {
+  #loc-overlay, #banen-overlay {
     display: none;
     position: fixed;
     inset: 0;
@@ -376,9 +376,9 @@
     padding: 20px;
   }
 
-  #info-overlay.open, #loc-overlay.open, #banen-overlay.open { display: flex; }
+  #loc-overlay.open, #banen-overlay.open { display: flex; }
 
-  #info-card, #loc-card, #banen-card {
+  #loc-card, #banen-card {
     background: #fff;
     border-radius: 10px;
     max-width: 440px;
@@ -474,7 +474,7 @@
     font-weight: 600;
   }
 
-  #info-close {
+  #loc-close, #banen-close {
     font-size: 26px;
     line-height: 1;
     background: none;
@@ -485,29 +485,17 @@
     padding: 0 4px;
   }
 
-  .info-h {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 14px 0 8px;
-  }
-
-  #info-courses {
-    list-style: none;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px 16px;
-  }
-
-  #info-courses li {
-    font-size: 14px;
-    padding: 2px 0;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
   .info-credit {
     margin-top: 18px;
     font-size: 13px;
     color: #666;
+  }
+
+  .page-credit {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    margin: 24px 0 32px;
   }
 
   .banen-intro { font-size: 13px; color: #666; margin: 4px 0 14px; line-height: 1.4; }
@@ -551,7 +539,6 @@
     .desktop-filter { display: none; }
     #filters-btn { display: block; }
     #filter-overlay.open { display: flex; }
-    #info-courses { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -649,7 +636,6 @@
   <button id="filters-btn">Filters</button>
   <span id="status"></span>
   <button id="banen-btn">Banen</button>
-  <button id="info-btn">Info</button>
 </div>
 
 <div id="filter-overlay">
@@ -774,18 +760,6 @@
   </div>
 </div>
 
-<div id="info-overlay">
-  <div id="info-card">
-    <div id="info-card-header">
-      <span id="info-title">Info</span>
-      <button id="info-close">&#215;</button>
-    </div>
-    <h3 class="info-h">Banen</h3>
-    <ul id="info-courses"></ul>
-    <p class="info-credit">Gemaakt door Luit Elbers</p>
-  </div>
-</div>
-
 <div id="banen-overlay">
   <div id="banen-card">
     <div id="info-card-header">
@@ -794,12 +768,15 @@
     </div>
     <p class="banen-intro">Vink banen uit die je niet wilt zien. Standaard staan alle banen aan. Afstand verschijnt zodra je je locatie hebt ingesteld.</p>
     <div id="banen-list"></div>
+    <p class="info-credit">Gemaakt door Luit Elbers</p>
   </div>
 </div>
 
 <div id="table-container">
   <div id="message"></div>
 </div>
+
+<p class="page-credit">Gemaakt door Luit Elbers</p>
 
 <script>
   const COURSE_ORDER = [
@@ -1258,21 +1235,6 @@
     filterOverlay.classList.remove('open');
     fetchData();
     if (maxKm !== null && !userCoords) openLocModal();
-  });
-
-  // Info modal
-  const infoCourses = document.getElementById('info-courses');
-  [...COURSE_ORDER].sort((a, b) => a.localeCompare(b)).forEach(name => {
-    const li = document.createElement('li');
-    li.textContent = name;
-    infoCourses.appendChild(li);
-  });
-
-  const infoOverlay = document.getElementById('info-overlay');
-  document.getElementById('info-btn').addEventListener('click', () => infoOverlay.classList.add('open'));
-  document.getElementById('info-close').addEventListener('click', () => infoOverlay.classList.remove('open'));
-  infoOverlay.addEventListener('click', e => {
-    if (e.target === infoOverlay) infoOverlay.classList.remove('open');
   });
 
   // Banen modal — per-device course selection
