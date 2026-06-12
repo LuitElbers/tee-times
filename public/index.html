@@ -14,7 +14,9 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
   #filter-bar {
@@ -137,7 +139,7 @@
     padding: 5px 8px;
     white-space: nowrap;
     position: sticky;
-    top: 46px;
+    top: var(--th-sub-top, 46px);
     z-index: 5;
   }
 
@@ -1590,7 +1592,29 @@
     const oldTable = container.querySelector('table');
     if (oldTable) oldTable.remove();
     container.appendChild(table);
+    requestAnimationFrame(syncHeaderOffset);
   }
+
+  // The sub-header sticks directly below the club-name row. That row's height is
+  // not a fixed number — it grows with the landschap/hoogte tags and renders a
+  // couple of px taller on iOS — so measure it instead of hardcoding 46px.
+  function syncHeaderOffset() {
+    const th = document.querySelector('#table-container .th-course');
+    if (th) document.documentElement.style.setProperty('--th-sub-top', th.offsetHeight + 'px');
+  }
+
+  // iOS freezes/restores backgrounded tabs without a full relayout, leaving the
+  // sticky headers pinned to stale geometry. Re-measure and nudge the scroll
+  // container so Safari recomputes the sticky positions on return/resize.
+  function recomputeStickyLayout() {
+    syncHeaderOffset();
+    const c = document.getElementById('table-container');
+    if (c) { c.scrollBy(0, 1); c.scrollBy(0, -1); }
+  }
+  window.addEventListener('pageshow', e => { if (e.persisted) recomputeStickyLayout(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) recomputeStickyLayout(); });
+  window.addEventListener('orientationchange', () => requestAnimationFrame(recomputeStickyLayout));
+  window.addEventListener('resize', () => requestAnimationFrame(syncHeaderOffset));
 
   fetchData();
   if (!userCoords) openLocModal();
