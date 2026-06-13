@@ -799,6 +799,7 @@
     "Tespelduyn", "Edese", "De Compagnie",
     "Rijk van Nijmegen", "Rijk van Sybrook", "Rijk van Margraten",
     "De Texelse", "Regthuys", "Westfriese", "Amsterdam Old Course", "Broekpolder", "De Woeste Kop", "Kromme Rijn", "Schaerweijde", "Wouwse Plantage", "Princenbosch", "Parc de Pettelaar", "De Swinkelsche", "Vught", "De Dommel", "Overbrug", "Riel", "De Oosterhoutse", "Stippelberg", "De Golfhorst", "Haviksoord",
+    "Heiloo", "Kavel II Beemster", "Domburgsche", "Openbare Golfclub Dronten", "Putten", "Anderstein", "Flevoland", "Havelte", "Soestduinen", "De Bonte Bij",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -881,6 +882,16 @@
     "Stippelberg":               { main: "#721c4f", sub: "#a63076" },
     "De Golfhorst":              { main: "#721c36", sub: "#a63053" },
     "Haviksoord":                { main: "#721c1c", sub: "#a63030" },
+    "Heiloo":                    { main: "#762f22", sub: "#ac4a39" },
+    "Kavel II Beemster":         { main: "#766122", sub: "#ac8f39" },
+    "Domburgsche":               { main: "#597622", sub: "#83ac39" },
+    "Openbare Golfclub Dronten": { main: "#267622", sub: "#3fac39" },
+    "Putten":                    { main: "#227650", sub: "#39ac78" },
+    "Anderstein":                { main: "#226976", sub: "#399aac" },
+    "Flevoland":                 { main: "#223776", sub: "#3956ac" },
+    "Havelte":                   { main: "#3f2276", sub: "#6139ac" },
+    "Soestduinen":               { main: "#722276", sub: "#a639ac" },
+    "De Bonte Bij":              { main: "#762248", sub: "#ac396d" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -965,6 +976,16 @@
     "Stippelberg":               { lat: 51.50851, lon: 5.76608 },
     "De Golfhorst":              { lat: 51.42550, lon: 5.96479 },
     "Haviksoord":                { lat: 51.34840, lon: 5.55189 },
+    "Heiloo":                    { lat: 52.58307, lon: 4.71352 },
+    "Kavel II Beemster":         { lat: 52.52558, lon: 4.92101 },
+    "Domburgsche":               { lat: 51.55560, lon: 3.48413 },
+    "Openbare Golfclub Dronten": { lat: 52.49752, lon: 5.70899 },
+    "Putten":                    { lat: 52.23706, lon: 5.51773 },
+    "Anderstein":                { lat: 52.06349, lon: 5.39745 },
+    "Flevoland":                 { lat: 52.53648, lon: 5.45065 },
+    "Havelte":                   { lat: 52.78402, lon: 6.24799 },
+    "Soestduinen":               { lat: 52.14265, lon: 5.29093 },
+    "De Bonte Bij":              { lat: 51.67994, lon: 5.60116 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -1050,6 +1071,16 @@
     "Stippelberg":               { landschap: ["bos"],              hoogte: "glooiend" },
     "De Golfhorst":              { landschap: ["bos"],              hoogte: "glooiend" },
     "Haviksoord":                { landschap: ["bos"],              hoogte: "glooiend" },
+    "Heiloo":                    { landschap: ["polder"],           hoogte: "plat" },
+    "Kavel II Beemster":         { landschap: ["polder"],           hoogte: "plat" },
+    "Domburgsche":               { landschap: ["duinen"],           hoogte: "glooiend" },
+    "Openbare Golfclub Dronten": { landschap: ["polder"],           hoogte: "plat" },
+    "Putten":                    { landschap: ["bos"],              hoogte: "glooiend" },
+    "Anderstein":                { landschap: ["bos", "heide"],     hoogte: "glooiend" },
+    "Flevoland":                 { landschap: ["polder"],           hoogte: "plat" },
+    "Havelte":                   { landschap: ["bos", "heide"],     hoogte: "glooiend" },
+    "Soestduinen":               { landschap: ["bos", "heide"],     hoogte: "glooiend" },
+    "De Bonte Bij":              { landschap: ["bos"],              hoogte: "glooiend" },
   };
 
   function courseTagLabel(courseName) {
