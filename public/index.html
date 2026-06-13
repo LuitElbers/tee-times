@@ -797,6 +797,7 @@
     "De Berendonck", "De Breuninkhof", "Land van Thorn",
     "Sint Nyk", "BurgGolf Rotterdam", "Shortgolf Utrecht",
     "Tespelduyn", "Edese", "De Compagnie",
+    "Rijk van Nijmegen", "Rijk van Sybrook", "Rijk van Margraten",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -856,6 +857,9 @@
     "Tespelduyn":              { main: "#226b76", sub: "#329699" },
     "Edese":                   { main: "#766022", sub: "#998032" },
     "De Compagnie":            { main: "#6b1a5a", sub: "#7d206b" },
+    "Rijk van Nijmegen":       { main: "#2d6b1a", sub: "#3a8522" },
+    "Rijk van Sybrook":        { main: "#1a766b", sub: "#22998a" },
+    "Rijk van Margraten":      { main: "#761a3a", sub: "#992248" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -917,6 +921,9 @@
     "Tespelduyn":              { lat: 52.28381, lon: 4.52236 },
     "Edese":                   { lat: 52.01005, lon: 5.82836 },
     "De Compagnie":            { lat: 53.11272, lon: 6.85004 },
+    "Rijk van Nijmegen":       { lat: 51.77410, lon: 5.93054 },
+    "Rijk van Sybrook":        { lat: 52.20399, lon: 6.79944 },
+    "Rijk van Margraten":      { lat: 50.83848, lon: 5.76062 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -979,6 +986,9 @@
     "Tespelduyn":              { landschap: ["polder"],        hoogte: "plat" },
     "Edese":                   { landschap: ["bos", "heide"],  hoogte: "heuvelachtig" },
     "De Compagnie":            { landschap: ["polder"],        hoogte: "plat" },
+    "Rijk van Nijmegen":       { landschap: ["bos", "heide"],  hoogte: "heuvelachtig" },
+    "Rijk van Sybrook":        { landschap: ["bos"],           hoogte: "glooiend" },
+    "Rijk van Margraten":      { landschap: ["bos"],           hoogte: "heuvelachtig" },
   };
 
   function courseTagLabel(courseName) {
