@@ -32,6 +32,7 @@ CLUBS = [
     {"api_url": "https://zeeuwsche.baan.intogolf.nl/api/igg", "course_name": "De Zeeuwsche", "booking_url": "https://zeeuwsche.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://kroonprins.baan.intogolf.nl/api/igg", "course_name": "De Kroonprins", "booking_url": "https://kroonprins.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://dronten.baan.intogolf.nl/api/igg", "course_name": "Golf Residentie Dronten", "booking_url": "https://dronten.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://delfland.baan.intogolf.nl/api/igg", "course_name": "Delfland", "booking_url": "https://www.delflandgolf.nl/reserveer-starttijd/reserveren-starttijd/"},
 ]
 
 

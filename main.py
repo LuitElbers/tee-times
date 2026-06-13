@@ -9,6 +9,7 @@ from scrapers.golfmanager import fetch_tee_times as gm_fetch
 from scrapers.egolf4u import fetch_tee_times as eg_fetch
 from scrapers.nexxchange import fetch_tee_times as nx_fetch
 from scrapers.rijkvannunspeet import fetch_tee_times as rvn_fetch
+from scrapers.asparagi import fetch_tee_times as asp_fetch
 from models import TeeTime
 
 app = FastAPI()
@@ -54,6 +55,7 @@ async def get_tee_times(
         eg_fetch(date, players, holes_int, include_par3, include_championship),
         nx_fetch(date, players, holes_int, include_par3, include_championship),
         rvn_fetch(date, players, holes_int, include_par3, include_championship),
+        asp_fetch(date, players, holes_int, include_par3, include_championship),
     ]
 
     all_results = await asyncio.gather(*[_run_backend(s) for s in scrapers], return_exceptions=True)

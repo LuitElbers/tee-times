@@ -800,6 +800,8 @@
     "Rijk van Nijmegen", "Rijk van Sybrook", "Rijk van Margraten",
     "De Texelse", "Regthuys", "Westfriese", "Amsterdam Old Course", "Broekpolder", "De Woeste Kop", "Kromme Rijn", "Schaerweijde", "Wouwse Plantage", "Princenbosch", "Parc de Pettelaar", "De Swinkelsche", "Vught", "De Dommel", "Overbrug", "Riel", "De Oosterhoutse", "Stippelberg", "De Golfhorst", "Haviksoord",
     "Heiloo", "Kavel II Beemster", "Domburgsche", "Openbare Golfclub Dronten", "Putten", "Anderstein", "Flevoland", "Havelte", "Soestduinen", "De Bonte Bij",
+    "Ockenburgh", "Capelle", "Concordia", "De Turfvaert", "Hoenshuis", "Twentse Golfpark",
+    "Delfland",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -892,6 +894,13 @@
     "Havelte":                   { main: "#3f2276", sub: "#6139ac" },
     "Soestduinen":               { main: "#722276", sub: "#a639ac" },
     "De Bonte Bij":              { main: "#762248", sub: "#ac396d" },
+    "Ockenburgh":          { main: "#7a4d28", sub: "#ad7241" },
+    "Capelle":             { main: "#557a28", sub: "#7dad41" },
+    "Concordia":           { main: "#287a4d", sub: "#41ad72" },
+    "De Turfvaert":        { main: "#28557a", sub: "#417dad" },
+    "Hoenshuis":           { main: "#4d287a", sub: "#7241ad" },
+    "Twentse Golfpark":    { main: "#7a2855", sub: "#ad417d" },
+    "Delfland":            { main: "#2a4a76", sub: "#3a64a0" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -986,6 +995,13 @@
     "Havelte":                   { lat: 52.78402, lon: 6.24799 },
     "Soestduinen":               { lat: 52.14265, lon: 5.29093 },
     "De Bonte Bij":              { lat: 51.67994, lon: 5.60116 },
+    "Ockenburgh":          { lat: 52.06081, lon: 4.21559 },
+    "Capelle":             { lat: 51.94219, lon: 4.59255 },
+    "Concordia":           { lat: 52.02975, lon: 4.37510 },
+    "De Turfvaert":        { lat: 51.53724, lon: 4.59672 },
+    "Hoenshuis":           { lat: 50.88662, lon: 5.91798 },
+    "Twentse Golfpark":    { lat: 52.26587, lon: 6.79240 },
+    "Delfland":            { lat: 51.97956, lon: 4.32795 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -1081,6 +1097,13 @@
     "Havelte":                   { landschap: ["bos", "heide"],     hoogte: "glooiend" },
     "Soestduinen":               { landschap: ["bos", "heide"],     hoogte: "glooiend" },
     "De Bonte Bij":              { landschap: ["bos"],              hoogte: "glooiend" },
+    "Ockenburgh":          { landschap: ["duinen"],     hoogte: "glooiend" },
+    "Capelle":             { landschap: ["polder"],     hoogte: "plat" },
+    "Concordia":           { landschap: ["polder"],     hoogte: "plat" },
+    "De Turfvaert":        { landschap: ["bos"],        hoogte: "glooiend" },
+    "Hoenshuis":           { landschap: ["bos"],        hoogte: "heuvelachtig" },
+    "Twentse Golfpark":    { landschap: ["bos"],        hoogte: "glooiend" },
+    "Delfland":            { landschap: ["polder"],     hoogte: "plat" },
   };
 
   function courseTagLabel(courseName) {
