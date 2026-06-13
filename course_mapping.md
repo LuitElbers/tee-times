@@ -24,6 +24,44 @@ NH 37 ✓ · ZH 42 ✓ · Zeeland 8 ✓ · Utrecht 22 ✓ · Flevoland 11 ✓ ·
   - **egolf4u +20:** scraper generalized to full `host` + `noverify`; correct host form is `<sub>.teetime.e-golf4u.nl`. DROPPED Capelle (=Asparagi crsNr=71), Amelisweerd/Welschap (no grid), Eindhovensche (private).
   - **nexxchange +10:** reworked request — DROP `sortIndex`, add `hx-request` header + session-cookie GET, resolve `facetId` by hole-label per date, Semaphore(3). DROPPED Almeerderhout/Kleiburg/Tongelreep (no public sheet), Ookmeer/Old Course Loenen (gated).
   - All 36 tags are geography-guesses → [[tee-times-tag-validation]]. PERF: watch fan-out at 90+ (8s per-backend timeout caps response).
+- **(2026-06-13) NEW asparagi scraper +6, Delfland via intogolf +1 → 97 courses (HEAD b369c04, pushed).** Built `scrapers/asparagi.py` (8th backend): Ockenburgh, Capelle, Concordia, De Turfvaert, Hoenshuis, Twentse Golfpark. Delfland turned out to be intogolf (not Asparagi) — added there. See the ASPARAGI section + PLAYBOOK below.
+
+---
+
+## ⭐ ADD-A-COURSE PLAYBOOK (consolidated 2026-06-13 — READ THIS FIRST when adding any province)
+
+**We now have 8 backends (scraper exists):** teecontrol · intogolf · egolf4u · nexxchange · hetrijk · golfmanager · hollandschegolfclub · **asparagi**. Most new courses land on one of these → adding = config entry + enrichment, no new scraper.
+
+### Step 0 — enumerate + detect backend per club (the mapping)
+- Enumerate clubs per province: golfmeesters.nl, golfinderegio.nl, anwbgolf.nl/golfbanen, playgolfinholland.nl. AVOID leadingcourses.com & nl.wikipedia (403) and golf.nl banenzoeker (JS-only → empty to WebFetch).
+- **Detect the backend from the club's LIVE "Starttijd reserveren / Boek een starttijd" link — never trust an old mapping.** Clubs migrate (Havelte: teecontrol→nexxchange this session). Two reliable ways:
+  1. `WebFetch`/curl the booking page, grep the booking host (`*.teecontrol.com`, `*.baan.intogolf.nl`, `*.e-golf4u.nl`/white-label, `nexxchange.com`, `reserveren.hetrijkgolfbanen.nl`, `eu.golfmanager.com`, `ikgagolfen.nl`).
+  2. If the page is a JS SPA (no link in raw HTML), use the Playwright browser: `browser_navigate` then read `<a>`/`iframe` hrefs and **`browser_network_requests`** — the booking widget's network calls reveal the backend host (e.g. Delfland loaded `cdn.intogolf.nl/teetime.js` → host `delfland.baan.intogolf.nl`).
+- **ALWAYS probe the public backend grid before excluding** (club site can login-gate while the backend grid is public — the Haenen lesson). And **distinguish "booking window not open" (returns data on near dates, 0 further out — KEEP) from "always 0 / login-gated" (0 on every date — DROP).**
+
+### Step 1 — get the IDs + add the config entry (per backend recipe)
+- **teecontrol** `{origin:"https://<sub>.teecontrol.com", course_name, booking_url:".../book"}`. Find `<sub>`: grep the club booking page for `<sub>.teecontrol.com`, OR test `GET https://api.teecontrol.com/auth/guest` with header `Origin: https://<sub>.teecontrol.com` (200+token = valid, 401 = wrong). Subdomains are unpredictable (golfbaantespelduyn, egcp, gcdecompagnie). Par-3/4 sub-courses with is_par_three=False need a SHORT_COURSES entry. Rate-limit: serial throttle already built; don't fan-out test.
+- **intogolf** `{api_url:"https://<sub>.baan.intogolf.nl/api/igg", course_name, booking_url}`. Find `<sub>` from the club page's embedded `cdn.intogolf.nl/teetime.js` widget (network host `<sub>.baan.intogolf.nl`). Probe `GET <api_url>?date=YYYY-MM-DD` → `{"payload":[...]}`. The `golfer.*` SPA is login-gated — ignore. ProWare `<club>.prowaregolf.nl/api/igg` is auth-gated — ignore (those route via hollandschegolfclub or asparagi).
+- **egolf4u** `{host:"<sub>.teetime.e-golf4u.nl"|white-label, name, noverify?:True, baans:[{baan,sub,holes,is_par3}]}`. Correct host form is `<sub>.teetime.e-golf4u.nl` (bare `<sub>.e-golf4u.nl` 404s). Public grid: `https://<host>/app/booking/teetime?baan=1&datum=DD-MM-YYYY&holes=18&view=grid` — enumerate baan ids from the baan dropdown. White-label hosts (texelse.nl, gcdedommel.nl, golfclubvught.nl, golfbaan-stippelberg.com) work directly; set `noverify:True` for TLS cert issues.
+- **nexxchange** `{slug, name, is_par3, holes:[9,18], booking_url}`. Grid `https://www.nexxchange.com/search/teetimes/<slug>`. Mechanism (baked into scraper): GET the grid page first (session cookie), send header `hx-request: true`, **DROP `sortIndex`** (it zeros several clubs), resolve `facetId` per-date by matching the hole-count label in `#facet-name-list` (facets renumber per date), keep `courseId=1`, Semaphore(3) (it 500s on bigger fan-out). Exclude login/member-gated (Ookmeer, Old Course Loenen).
+- **hetrijk** add a SITES entry `{sitecode, site_name, course display name, courses:[{id,guid,name,par3}]}`. Find SITECODE by probing `https://reserveren.hetrijkgolfbanen.nl/OnlineRes/<CODE>/Home/WidgetView/?Option=bezoekers` (valid = booking widget HTML); parse SiteId/CourseId/CourseGUID from that page. Confirmed codes: RvNu, RvN, RvS, RvM.
+- **hollandschegolfclub** (BurgGolf/HGC cluster) `{"id":<location_id>, "name":"..."}` — ONE line. Enumerate ids from `<select id="itg-location">` on hollandschegolfclub.nl/boek-een-starttijd/. CHEAPEST adds.
+- **golfmanager** `{slug, area}` at `eu.golfmanager.com/<slug>` (JSON availability).
+- **asparagi (ikgagolfen)** `{crs:<exclusiveCrsNr>, name, is_par3}`. Public legacy greenfee grid: `https://www.ikgagolfen.nl/asparagi/ikgagolfen/site2/teetimes/teetimes.asp?exclusiveCrsNr=<crsNr>` (GET for session form, then POST multipart playdate/flightsize/_mbr; avail cells = `td.tt_av/tt_avh`). **Get every club's `crsNr` from the PUBLIC V3 API `https://backendv3.ikgagolfen.nl/api/course/list`** (returns crsNr/crsComNr/location.locNr/crsShortName for all ~30 clubs). ⚠️ V3 `teetimes/list?locNr=&date=` is AUTH-GATED ("Relation not found") — clubs that moved fully to V3 with an empty legacy grid (Golf Centrum Noordwijk, Kagerzoom, The Dunes) can't be scraped without a login → drop. Many course/list clubs already in app via intogolf/hollandschegolfclub — don't duplicate.
+
+### Step 2 — validate the scraper (before enrichment)
+`PYTHONPATH=. py` a script importing the scraper's `fetch_tee_times` for the NEXT SATURDAY (note: if today is Sat, use +7), players=1, holes=None, include_par3=True; print `Counter(t.course ...)`. Confirm each new club >0 (0 → check par-3-only / booking-window / drop if always-empty). Test 2-3 clubs at a time; never re-run full teecontrol fan-out (rate-limit).
+
+### Step 3 — enrich index.html (4 maps: COURSE_ORDER/COLORS/COORDS/TAGS)
+Use **`py tools/enrich_gen.py`** (edit its SPEC list) — geocodes (Nominatim named-then-town), auto HSL colors, prints all 4 formatted blocks to paste. **GOTCHA: the map key MUST exactly equal the scraper's emitted `course`/`course_name` (case+spacing).** Tags = geography rule (default polder/plat; see the script header + [[tee-times-tag-validation]]).
+
+### Step 4 — validate maps + commit
+`node tools/check_maps.js` (asserts all 4 maps have identical keys) — must say "ALL 4 MAPS CONSISTENT". Optional: local UI smoke test (`py -m http.server <port> --directory public` + Playwright, assert Banen row count). Commit specific files per backend (`git add scrapers/<x>.py public/index.html`; NOT `-A` — it sweeps working docs). Push works from the Claude session → Vercel auto-redeploys.
+
+### Workflow that worked (reuse): parallel background subagents
+One subagent per backend, each: probes IDs + edits ONLY its own scraper + validates + RETURNS an enrichment-data table. They must NOT touch index.html (shared file → clobber). Main agent enriches index.html centrally (Step 3) + map-check + commits per batch. Each subagent is one-shot (no resume) — front-load full context, tell it to write progress to `phase1_progress/<backend>.md` and always return partial results. See [[feedback-subagents-not-resumable]].
+
+---
 
 ### BIG WIN — hollandschegolfclub.nl portal serves the ENTIRE BurgGolf/HGC cluster (cheapest adds available)
 The existing `scrapers/hollandschegolfclub.py` hits one WordPress AJAX endpoint (`itg_get_teetimes`) keyed by `location_id`. That ONE portal exposes the whole BurgGolf/Hollandsche Golfclub group. Adding a course = **ONE line** `{"id": <location_id>, "name": "..."}` in `LOCATIONS` + standard enrichment. No new scraper, no per-club host hunting.
@@ -45,7 +83,7 @@ The existing `scrapers/hollandschegolfclub.py` hits one WordPress AJAX endpoint 
 ### REMAINING — new scrapers needed (~6 courses)
 | Scraper | # | Notes | Cost |
 |---|---|---|---|
-| **Asparagi / ikgagolfen** | many | **HIGH-VALUE** new scraper — parse the public `teetimes.asp?exclusiveCrsNr=NNN` HTML grid. Confirmed: Ockenburgh(908), Delfland. Shared NGF portal → enumerate crsNr to unlock a big batch. User deferred s3 but flagged worth building. | MED ~0.4–0.6 |
+| ~~Asparagi / ikgagolfen~~ | — | **DONE 2026-06-13** — `scrapers/asparagi.py` built, +6 clubs. Delfland was intogolf, not Asparagi. Enumerate more via the V3 `course/list` API (most others already in app). See PLAYBOOK + ASPARAGI section. | — |
 | chronogolf (Lightspeed) | 4 | new scraper; Weesp, Hoogland Amersfoort, Dongen, Roosendaal | MED–HIGH ~0.5–0.7 |
 | Bernardus (custom wp-json) | 1 | bespoke scraper, high-end course | LOW–MED ~0.2 |
 | cps (eu.cps.golf) | 1 | Dorhout Mees — poor ROI, **defer/skip** | MED ~0.3 |
@@ -98,7 +136,7 @@ Gelderland, Overijssel, Limburg, Groningen, Friesland, Drenthe. Enumerate + dete
 - NOTE: agents are unreliable on already-in-app courses (they guessed wrong backends for Amsteldijk/Heemskerk/Waterland). Trust the "Already in app" section above, not agent guesses, for those.
 
 ## Backends supported today (scraper exists)
-teecontrol, egolf4u, intogolf (`*.baan.intogolf.nl/api/igg`), golfmanager, nexxchange, hetrijk (rijkvannunspeet — extend by SITECODE), hollandschegolfclub (ITG/Proware plugin on hollandschegolfclub.nl — keyed by `location_id`, serves the whole BurgGolf/HGC cluster).
+teecontrol, egolf4u, intogolf (`*.baan.intogolf.nl/api/igg`), golfmanager, nexxchange, hetrijk (rijkvannunspeet — extend by SITECODE), hollandschegolfclub (ITG/Proware plugin on hollandschegolfclub.nl — keyed by `location_id`, serves the whole BurgGolf/HGC cluster), **asparagi** (ikgagolfen legacy `teetimes.asp?exclusiveCrsNr` greenfee grid — keyed by crsNr from the V3 `course/list` API). **8 backends. See the ⭐ PLAYBOOK at the top for the full add-a-course recipe + reusable tools/check_maps.js & tools/enrich_gen.py.**
 
 ## Already in app (13) — real backends
 Hoge Dijk=teecontrol · Spaarnwoude=teecontrol · Liemeer=teecontrol · Bergvliet=teecontrol · Waterland=golfmanager · Wilnis=intogolf · Zaanse=intogolf · Amsteldijk=nexxchange · De Purmer=hollandschegolfclub(ITG) · De Loonsche Duynen=hollandschegolfclub(ITG)/loonscheduynen.prowaregolf.nl · Heemskerk=egolf4u · Haenen=egolf4u · Rijk van Nunspeet=hetrijk(RvNu)
