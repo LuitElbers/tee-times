@@ -18,6 +18,12 @@ NH 37 ✓ · ZH 42 ✓ · Zeeland 8 ✓ · Utrecht 22 ✓ · Flevoland 11 ✓ ·
 ### DONE & deployed
 - **intogolf +13, teecontrol +16** added, enriched (coords/colors/order/tags), per-backend 8s timeout in main.py, committed + pushed. See [[project-tee-times]]. Tags are geography-guesses pending validation — see [[tee-times-tag-validation]].
 - **(session 3, 2026-06-11) hollandschegolfclub +12** (Westerpark + the whole BurgGolf/HGC cluster) added via `location_id` — see the BIG WIN note below. App now 54 courses. Info tab removed; "Gemaakt door Luit Elbers" credit added (main page + Banen modal).
+- **(2026-06-13) Phase 1 — all mapped courses on existing scrapers DONE, +36 → 90 courses, pushed (HEAD 1021187).** Done via 3 parallel background subagents (one scraper each, no index.html edits; main enriched centrally). Per backend:
+  - **teecontrol +3:** Tespelduyn=`golfbaantespelduyn`, Edese=`egcp`, De Compagnie=`gcdecompagnie` (the previously-401'd subdomains — found from booking pages). **Havelte left teecontrol → nexxchange.**
+  - **hetrijk +3:** Nijmegen=RvN(SiteId 2), Sybrook=RvS(4), Margraten=RvM(3). Scraper generalized to a SITES list.
+  - **egolf4u +20:** scraper generalized to full `host` + `noverify`; correct host form is `<sub>.teetime.e-golf4u.nl`. DROPPED Capelle (=Asparagi crsNr=71), Amelisweerd/Welschap (no grid), Eindhovensche (private).
+  - **nexxchange +10:** reworked request — DROP `sortIndex`, add `hx-request` header + session-cookie GET, resolve `facetId` by hole-label per date, Semaphore(3). DROPPED Almeerderhout/Kleiburg/Tongelreep (no public sheet), Ookmeer/Old Course Loenen (gated).
+  - All 36 tags are geography-guesses → [[tee-times-tag-validation]]. PERF: watch fan-out at 90+ (8s per-backend timeout caps response).
 
 ### BIG WIN — hollandschegolfclub.nl portal serves the ENTIRE BurgGolf/HGC cluster (cheapest adds available)
 The existing `scrapers/hollandschegolfclub.py` hits one WordPress AJAX endpoint (`itg_get_teetimes`) keyed by `location_id`. That ONE portal exposes the whole BurgGolf/Hollandsche Golfclub group. Adding a course = **ONE line** `{"id": <location_id>, "name": "..."}` in `LOCATIONS` + standard enrichment. No new scraper, no per-club host hunting.
