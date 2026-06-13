@@ -82,6 +82,9 @@ COURSES = [
     {"origin": "https://heelsum.teecontrol.com", "course_name": "Heelsum", "booking_url": "https://heelsum.teecontrol.com/book"},
     {"origin": "https://welderen.teecontrol.com", "course_name": "Welderen", "booking_url": "https://welderen.teecontrol.com/book"},
     {"origin": "https://prise-deau.teecontrol.com", "course_name": "Prise d'Eau", "booking_url": "https://prise-deau.teecontrol.com/book"},
+    {"origin": "https://golfbaantespelduyn.teecontrol.com", "course_name": "Tespelduyn", "booking_url": "https://golfbaantespelduyn.teecontrol.com/book"},
+    {"origin": "https://egcp.teecontrol.com", "course_name": "Edese", "booking_url": "https://egcp.teecontrol.com/book"},
+    {"origin": "https://gcdecompagnie.teecontrol.com", "course_name": "De Compagnie", "booking_url": "https://gcdecompagnie.teecontrol.com/book"},
 ]
 
 API_BASE = "https://api.teecontrol.com"

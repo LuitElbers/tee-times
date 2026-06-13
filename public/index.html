@@ -796,6 +796,7 @@
     "De Haverleij", "Gendersteyn", "Almkreek", "De Kurenpolder", "Reymerswael",
     "De Berendonck", "De Breuninkhof", "Land van Thorn",
     "Sint Nyk", "BurgGolf Rotterdam", "Shortgolf Utrecht",
+    "Tespelduyn", "Edese", "De Compagnie",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -852,6 +853,9 @@
     "De Zeeuwsche":            { main: "#76223e", sub: "#993255" },
     "De Kroonprins":           { main: "#76222d", sub: "#993240" },
     "Golf Residentie Dronten": { main: "#762822", sub: "#993a32" },
+    "Tespelduyn":              { main: "#226b76", sub: "#329699" },
+    "Edese":                   { main: "#766022", sub: "#998032" },
+    "De Compagnie":            { main: "#6b1a5a", sub: "#7d206b" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -910,6 +914,9 @@
     "De Zeeuwsche":            { lat: 51.49968, lon: 3.61374 },
     "De Kroonprins":           { lat: 51.98899, lon: 5.09392 },
     "Golf Residentie Dronten": { lat: 52.50351, lon: 5.71608 },
+    "Tespelduyn":              { lat: 52.28381, lon: 4.52236 },
+    "Edese":                   { lat: 52.01005, lon: 5.82836 },
+    "De Compagnie":            { lat: 53.11272, lon: 6.85004 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -969,6 +976,9 @@
     "De Zeeuwsche":            { landschap: ["polder"],        hoogte: "plat" },
     "De Kroonprins":           { landschap: ["polder"],        hoogte: "plat" },
     "Golf Residentie Dronten": { landschap: ["polder"],        hoogte: "plat" },
+    "Tespelduyn":              { landschap: ["polder"],        hoogte: "plat" },
+    "Edese":                   { landschap: ["bos", "heide"],  hoogte: "heuvelachtig" },
+    "De Compagnie":            { landschap: ["polder"],        hoogte: "plat" },
   };
 
   function courseTagLabel(courseName) {
