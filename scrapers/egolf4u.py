@@ -6,13 +6,14 @@ from bs4 import BeautifulSoup
 from models import TeeTime
 
 _client = httpx.AsyncClient(timeout=15.0, follow_redirects=True)
+_client_noverify = httpx.AsyncClient(timeout=15.0, follow_redirects=True, verify=False)
 AMS = ZoneInfo("Europe/Amsterdam")
 
 # Each "baan" is a bookable course variant from the e-golf4u baan dropdown.
 # baan id, holes and par-3 flag come from the site's own labels (authoritative).
 COURSES = [
     {
-        "subdomain": "dehaenen",
+        "host": "dehaenen.teetime.e-golf4u.nl",
         "name": "Haenen",
         "baans": [
             {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
@@ -22,7 +23,7 @@ COURSES = [
         ],
     },
     {
-        "subdomain": "heemskerkse",
+        "host": "heemskerkse.teetime.e-golf4u.nl",
         "name": "Heemskerk",
         "baans": [
             {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
@@ -34,15 +35,197 @@ COURSES = [
             {"baan": 14, "sub": "Par 3 18 holes BA", "holes": 18, "is_par3": True},
         ],
     },
+    {
+        "host": "teetime.texelse.nl",
+        "name": "De Texelse",
+        "noverify": True,
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 3, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 4, "sub": "Par 3", "holes": 9, "is_par3": True},
+            {"baan": 6, "sub": "Par 3 18 holes", "holes": 18, "is_par3": True},
+        ],
+    },
+    {
+        "host": "regthuys.teetime.e-golf4u.nl",
+        "name": "Regthuys",
+        "baans": [
+            {"baan": 1, "sub": "Dijklus - Tulpenlus", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "Dijklus", "holes": 9, "is_par3": False},
+            {"baan": 3, "sub": "Tulpenlus", "holes": 9, "is_par3": False},
+            {"baan": 6, "sub": "Tulpenlus - Dijklus", "holes": 18, "is_par3": False},
+            {"baan": 4, "sub": "Par 3", "holes": 9, "is_par3": True},
+            {"baan": 21, "sub": "Par 3 18 holes", "holes": 18, "is_par3": True},
+        ],
+    },
+    {
+        "host": "westwoud.teetime.e-golf4u.nl",
+        "name": "Westfriese",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 3, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "aoc.teetime.e-golf4u.nl",
+        "name": "Amsterdam Old Course",
+        "baans": [
+            {"baan": 26, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 20, "sub": "9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "broekpolder.teetime.e-golf4u.nl",
+        "name": "Broekpolder",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 3, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 4, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "woestekop.teetime.e-golf4u.nl",
+        "name": "De Woeste Kop",
+        "baans": [
+            {"baan": 1, "sub": "Start hole 1", "holes": 18, "is_par3": False},
+            {"baan": 3, "sub": "Watertoren", "holes": 9, "is_par3": False},
+            {"baan": 6, "sub": "Grote Kreek", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "krommerijn.teetime.e-golf4u.nl",
+        "name": "Kromme Rijn",
+        "baans": [
+            {"baan": 8, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 3, "sub": "9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "schaerweijde.teetime.e-golf4u.nl",
+        "name": "Schaerweijde",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 7, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "wouwse.teetime.e-golf4u.nl",
+        "name": "Wouwse Plantage",
+        "baans": [
+            {"baan": 27, "sub": "18 holes Bleekloop/Plantage", "holes": 18, "is_par3": False},
+            {"baan": 72, "sub": "18 holes Plantage/Bleekloop", "holes": 18, "is_par3": False},
+            {"baan": 30, "sub": "9 holes De Bleekloop", "holes": 9, "is_par3": False},
+            {"baan": 33, "sub": "9 holes De Plantage", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "princenbosch.teetime.e-golf4u.nl",
+        "name": "Princenbosch",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+        ],
+    },
+    {
+        "host": "boisleduc.teetime.e-golf4u.nl",
+        "name": "Parc de Pettelaar",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "swinkelsche.teetime.e-golf4u.nl",
+        "name": "De Swinkelsche",
+        "baans": [
+            {"baan": 1, "sub": "Championship Course 18 holes", "holes": 18, "is_par3": False},
+            {"baan": 6, "sub": "Championship Course 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "teetime.golfclubvught.nl",
+        "name": "Vught",
+        "baans": [
+            {"baan": 23, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 18, "sub": "9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "teetime.gcdedommel.nl",
+        "name": "De Dommel",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 3, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "overbrug.teetime.e-golf4u.nl",
+        "name": "Overbrug",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "9 holes", "holes": 9, "is_par3": False},
+            {"baan": 5, "sub": "2e 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "riel.teetime.e-golf4u.nl",
+        "name": "Riel",
+        "baans": [
+            {"baan": 6, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 1, "sub": "9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "oosterhoutse.teetime.e-golf4u.nl",
+        "name": "De Oosterhoutse",
+        "baans": [
+            {"baan": 15, "sub": "18 holes Start Tee 1", "holes": 18, "is_par3": False},
+            {"baan": 17, "sub": "18 holes Start Tee 10", "holes": 18, "is_par3": False},
+            {"baan": 20, "sub": "9 holes Start Tee 1", "holes": 9, "is_par3": False},
+            {"baan": 23, "sub": "9 holes Start Tee 10", "holes": 9, "is_par3": False},
+            {"baan": 26, "sub": "Academy 9 holes", "holes": 9, "is_par3": True},
+            {"baan": 29, "sub": "Academy 18 holes", "holes": 18, "is_par3": True},
+        ],
+    },
+    {
+        "host": "teetime.golfbaan-stippelberg.com",
+        "name": "Stippelberg",
+        "baans": [
+            {"baan": 1, "sub": "Championship Course 18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "CC 1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 3, "sub": "CC 2de 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 4, "sub": "Eagle Course 18 holes", "holes": 18, "is_par3": False},
+            {"baan": 9, "sub": "Eagle Course 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "golfhorst.teetime.e-golf4u.nl",
+        "name": "De Golfhorst",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "haviksoord.teetime.e-golf4u.nl",
+        "name": "Haviksoord",
+        "baans": [
+            {"baan": 1, "sub": "Championship Course", "holes": 18, "is_par3": False},
+        ],
+    },
 ]
 
 
 async def _fetch_baan(course: dict, baan: dict, date: str, players: int) -> list[TeeTime]:
     parsed = date_type.fromisoformat(date)
     datum = parsed.strftime("%d-%m-%Y")
-    url = f"https://{course['subdomain']}.teetime.e-golf4u.nl/app/booking/teetime"
+    url = f"https://{course['host']}/app/booking/teetime"
     params = {"baan": baan["baan"], "datum": datum, "holes": baan["holes"], "tijd": "", "view": "grid"}
-    resp = await _client.get(url, params=params)
+    client = _client_noverify if course.get("noverify") else _client
+    resp = await client.get(url, params=params)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
