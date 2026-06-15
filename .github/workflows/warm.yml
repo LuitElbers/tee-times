@@ -10,12 +10,12 @@ permissions:
 
 concurrency:
   group: warmer
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   warm:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 

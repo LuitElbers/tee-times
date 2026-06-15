@@ -25,7 +25,7 @@ OUT = Path(__file__).parent / "warm.json"
 # at once 429s and gets silently dropped). Fetch a few clubs at a time and retry
 # transient failures, so coverage is complete and we can tell "empty" from "failed".
 _CONCURRENCY = 3
-_ATTEMPTS = 4
+_ATTEMPTS = 2
 
 
 def _dates() -> list[str]:
@@ -88,29 +88,19 @@ async def _warm_waterland(status: dict) -> dict[str, list]:
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
-        captured: dict[str, dict] = {}
-
-        async def on_response(resp):
-            if "availability.json" in resp.url:
-                try:
-                    captured[resp.url] = await resp.json()
-                except Exception:
-                    pass
-
-        page.on("response", on_response)
 
         for course in gm.COURSES:
             ok, failed, errors = 0, 0, []
             for d in _dates():
-                captured.clear()
                 url = f"{course['base_url']}/consumer/book?area={course['area']}&date={d}T00:00"
                 try:
-                    await page.goto(url, wait_until="networkidle", timeout=30000)
-                    data = next((v for k, v in captured.items() if d in k), None)
-                    if data is None:
-                        data = next(iter(captured.values()), None)
-                    if data is None:
-                        raise RuntimeError("no availability.json captured")
+                    # Wait for the data response itself rather than networkidle (the SPA
+                    # keeps a live connection open, so networkidle never settles).
+                    async with page.expect_response(
+                        lambda r: "availability.json" in r.url and d in r.url, timeout=20000
+                    ) as resp_info:
+                        await page.goto(url, wait_until="commit", timeout=20000)
+                    data = await (await resp_info.value).json()
                     items = data.get("items", [])
                     tts = gm.items_to_teetimes(course, items)
                     by_day[d].extend(t.model_dump(mode="json") for t in tts)
