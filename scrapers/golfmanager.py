@@ -25,16 +25,7 @@ def _parse_holes(name: str) -> int | None:
     return None
 
 
-async def _fetch_course(course: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
-    if course["is_par3"] and not include_par3:
-        return []
-    if not course["is_par3"] and not include_championship:
-        return []
-    url = f"{course['base_url']}/consumer/availability.json"
-    resp = await _client.get(url, params={"date": f"{date}T00:00", "area": course["area"]})
-    resp.raise_for_status()
-    items = resp.json().get("items", [])
-
+def items_to_teetimes(course: dict, items: list, players: int = 1, holes: int | None = None) -> list[TeeTime]:
     seen = set()
     result = []
     for item in items:
@@ -70,6 +61,18 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
         ))
 
     return result
+
+
+async def _fetch_course(course: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
+    if course["is_par3"] and not include_par3:
+        return []
+    if not course["is_par3"] and not include_championship:
+        return []
+    url = f"{course['base_url']}/consumer/availability.json"
+    resp = await _client.get(url, params={"date": f"{date}T00:00", "area": course["area"]})
+    resp.raise_for_status()
+    items = resp.json().get("items", [])
+    return items_to_teetimes(course, items, players, holes)
 
 
 async def fetch_tee_times(date: str, players: int, holes: int | None, include_par3: bool = False, include_championship: bool = True) -> list[TeeTime]:

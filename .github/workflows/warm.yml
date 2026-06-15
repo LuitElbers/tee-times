@@ -1,0 +1,53 @@
+name: warm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: warmer
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt playwright
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
+
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Build warm.json
+        run: python warm.py
+
+      - name: Publish to data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp warm.json "$RUNNER_TEMP/warm.json"
+          git checkout --orphan data-tmp
+          git rm -rf . >/dev/null 2>&1 || true
+          cp "$RUNNER_TEMP/warm.json" warm.json
+          git add -f warm.json
+          git commit -m "warm $(date -u +%FT%TZ)"
+          git push -f origin data-tmp:data

@@ -12,3 +12,4 @@ class TeeTime(BaseModel):
     price_eur: float | None
     is_available: bool
     booking_url: str
+    is_short: bool = False

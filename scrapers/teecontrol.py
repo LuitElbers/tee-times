@@ -146,13 +146,14 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
         if "footgolf" in s.get("name", "").lower():
             continue
         raw_name = _strip_season_prefix(s.get("name", ""))
-        is_short = s.get("is_par_three") or raw_name in SHORT_COURSES
+        is_short = bool(s.get("is_par_three") or raw_name in SHORT_COURSES)
         if is_short and not include_par3:
             continue
         if not is_short and not include_championship:
             continue
         if holes is not None and s.get("holes_amount") != holes:
             continue
+        s["_is_short"] = is_short
         filtered_sets.append(s)
 
     async def _fetch_set(s: dict) -> list[TeeTime]:
@@ -185,6 +186,7 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
                 price_eur=price_val,
                 is_available=True,
                 booking_url=course["booking_url"],
+                is_short=s.get("_is_short", False),
             ))
         return result
 
