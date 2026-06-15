@@ -303,7 +303,7 @@
     cursor: pointer;
   }
 
-  #m-from-time, #m-to-time {
+  #m-from-time, #m-to-time, #m-date-input {
     font-family: inherit;
     font-size: 15px;
     padding: 8px 10px;
@@ -552,7 +552,6 @@
     white-space: nowrap;
   }
 
-  #overzicht-btn.active { background: #222; color: #fff; border-color: #222; }
 
   /* Mobile Overzicht (summary) table */
   .ov-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -586,9 +585,15 @@
 
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
+    .date-label { display: none; }
     #filters-btn { display: block; }
-    #overzicht-btn { display: block; }
+    #overzicht-btn.visible { display: block; }
     #filter-overlay.open { display: flex; }
+    #filter-bar { gap: 6px 8px; padding: 8px 10px; flex-wrap: nowrap; }
+    #status { display: none; }
+    #filters-btn, #overzicht-btn, #banen-btn { padding: 5px 9px; font-size: 13px; }
+    #banen-btn { margin-left: auto; }
+    #date-input { max-width: 132px; }
   }
 </style>
 </head>
@@ -596,7 +601,7 @@
 
 <div id="filter-bar">
   <div class="filter-group">
-    <label for="date-input">Datum:</label>
+    <label class="date-label" for="date-input">Datum:</label>
     <input type="date" id="date-input">
   </div>
   <div class="filter-group desktop-filter">
@@ -696,37 +701,11 @@
     <span style="width:40px"></span>
   </div>
   <div id="overlay-body">
-    <div class="m-filter-group">
-      <span class="m-filter-label">Spelers</span>
-      <div class="toggle-group" id="m-players-group">
-        <button class="toggle-btn" data-value="1">1</button>
-        <button class="toggle-btn active" data-value="2">2</button>
-        <button class="toggle-btn" data-value="3">3</button>
-        <button class="toggle-btn" data-value="4">4</button>
-      </div>
-    </div>
-    <div class="m-filter-group">
-      <span class="m-filter-label">Holes</span>
-      <div class="toggle-group" id="m-holes-group">
-        <button class="toggle-btn" data-value="9">9</button>
-        <button class="toggle-btn" data-value="18">18</button>
-        <button class="toggle-btn active" data-value="all">All</button>
-      </div>
-    </div>
-    <div class="m-filter-group">
-      <span class="m-filter-label">Baan type</span>
-      <div class="m-checkbox-row">
-        <label class="m-checkbox-label">
-          <input type="checkbox" id="m-include-championship" checked>
-          Championship
-        </label>
-        <label class="m-checkbox-label">
-          <input type="checkbox" id="m-include-par3">
-          Par 3/4
-        </label>
-      </div>
-    </div>
     <div class="m-row">
+      <div class="m-filter-group">
+        <label class="m-filter-label" for="m-date-input">Datum</label>
+        <input type="date" id="m-date-input">
+      </div>
       <div class="m-filter-group">
         <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
         <select id="m-from-time">
@@ -760,6 +739,36 @@
           <option value="19:00">19:00</option>
           <option value="20:00" selected>20:00</option>
         </select>
+      </div>
+    </div>
+    <div class="m-filter-group">
+      <span class="m-filter-label">Spelers</span>
+      <div class="toggle-group" id="m-players-group">
+        <button class="toggle-btn" data-value="1">1</button>
+        <button class="toggle-btn active" data-value="2">2</button>
+        <button class="toggle-btn" data-value="3">3</button>
+        <button class="toggle-btn" data-value="4">4</button>
+      </div>
+    </div>
+    <div class="m-filter-group">
+      <span class="m-filter-label">Holes</span>
+      <div class="toggle-group" id="m-holes-group">
+        <button class="toggle-btn" data-value="9">9</button>
+        <button class="toggle-btn" data-value="18">18</button>
+        <button class="toggle-btn active" data-value="all">All</button>
+      </div>
+    </div>
+    <div class="m-filter-group">
+      <span class="m-filter-label">Baan type</span>
+      <div class="m-checkbox-row">
+        <label class="m-checkbox-label">
+          <input type="checkbox" id="m-include-championship" checked>
+          Championship
+        </label>
+        <label class="m-checkbox-label">
+          <input type="checkbox" id="m-include-par3">
+          Par 3/4
+        </label>
       </div>
     </div>
     <div class="m-filter-group">
@@ -1373,6 +1382,7 @@
 
   // Sync current state into mobile overlay controls
   function syncMobileFilters() {
+    document.getElementById('m-date-input').value = dateInput.value;
     document.querySelectorAll('#m-players-group .toggle-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.value === String(players));
     });
@@ -1405,6 +1415,9 @@
 
     const mHolesBtn = document.querySelector('#m-holes-group .toggle-btn.active');
     if (mHolesBtn) holes = mHolesBtn.dataset.value;
+
+    const mDate = document.getElementById('m-date-input').value;
+    if (mDate) dateInput.value = mDate;
 
     includeChampionship = document.getElementById('m-include-championship').checked;
     includePar3 = document.getElementById('m-include-par3').checked;
@@ -1639,14 +1652,14 @@
       if (selectedClub) {
         const clubRows = visible.filter(r => r.course === selectedClub);
         if (clubRows.length === 0) selectedClub = null;  // club fell out of the filter → back to overview
-        else { overzichtBtn.classList.remove('active'); renderTable(clubRows, container); return; }
+        else { overzichtBtn.classList.add('visible'); renderTable(clubRows, container); return; }
       }
-      overzichtBtn.classList.add('active');
+      overzichtBtn.classList.remove('visible');  // no "back" button while already on the Overzicht
       renderOverview(visible, container);
       return;
     }
 
-    overzichtBtn.classList.remove('active');
+    overzichtBtn.classList.remove('visible');
     renderTable(visible, container);
   }
 
