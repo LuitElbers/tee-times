@@ -289,11 +289,11 @@
     min-width: 0;
   }
 
-  /* Datum needs more room than the time dropdowns: the native date control
-     (especially on iOS) is intrinsically wider than a "10:00" select. */
-  .m-row .m-filter-group:first-child {
-    flex: 1.5;
-  }
+  /* Time dropdowns only hold "10:00", so keep them small and give all the
+     remaining width to Datum — the native date control (esp. on iOS) is much
+     wider than a time select and overlaps it if its column is too narrow. */
+  .m-row .m-date { flex: 1 1 auto; }
+  .m-row .m-time { flex: 0 0 auto; }
 
   .m-filter-label {
     font-size: 15px;
@@ -334,6 +334,8 @@
     width: 100%;
     min-width: 0;
   }
+
+  #m-from-time, #m-to-time { width: 68px; }
 
   .m-dist-row {
     display: flex;
@@ -729,11 +731,11 @@
   </div>
   <div id="overlay-body">
     <div class="m-row">
-      <div class="m-filter-group">
+      <div class="m-filter-group m-date">
         <label class="m-filter-label" for="m-date-input">Datum</label>
         <input type="date" id="m-date-input">
       </div>
-      <div class="m-filter-group">
+      <div class="m-filter-group m-time">
         <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
         <select id="m-from-time">
           <option value="09:00">9:00</option>
@@ -750,7 +752,7 @@
           <option value="20:00">20:00</option>
         </select>
       </div>
-      <div class="m-filter-group">
+      <div class="m-filter-group m-time">
         <label class="m-filter-label" for="m-to-time">Tijd tot</label>
         <select id="m-to-time">
           <option value="09:00">9:00</option>
