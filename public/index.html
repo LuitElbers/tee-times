@@ -289,10 +289,6 @@
     min-width: 0;
   }
 
-  .m-row .m-filter-group:first-child {
-    flex: 1.4;
-  }
-
   .m-filter-label {
     font-size: 15px;
     font-weight: 600;
@@ -594,6 +590,7 @@
   .ov-table td { padding: 8px 6px; border-bottom: 1px solid #eee; vertical-align: middle; }
 
   .ov-table tbody tr { cursor: pointer; }
+  .ov-table tbody tr:nth-child(even) { background: #f5f5f5; }
   .ov-table tbody tr:active { background: #eef5ef; }
 
   .ov-club { border-left: 4px solid #444; padding-left: 10px; }
@@ -725,11 +722,11 @@
     <span style="width:40px"></span>
   </div>
   <div id="overlay-body">
+    <div class="m-filter-group">
+      <label class="m-filter-label" for="m-date-input">Datum</label>
+      <input type="date" id="m-date-input">
+    </div>
     <div class="m-row">
-      <div class="m-filter-group">
-        <label class="m-filter-label" for="m-date-input">Datum</label>
-        <input type="date" id="m-date-input">
-      </div>
       <div class="m-filter-group">
         <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
         <select id="m-from-time">
