@@ -537,9 +537,57 @@
     vertical-align: middle;
   }
 
+  /* Mobile Overzicht button (hidden on desktop) */
+  #overzicht-btn {
+    display: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  #overzicht-btn.active { background: #222; color: #fff; border-color: #222; }
+
+  /* Mobile Overzicht (summary) table */
+  .ov-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+  .ov-table th {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    text-align: center;
+    padding: 8px 6px;
+    border-bottom: 2px solid #ddd;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    line-height: 1.2;
+  }
+
+  .ov-table th.ov-th-club { text-align: left; }
+
+  .ov-table td { padding: 8px 6px; border-bottom: 1px solid #eee; vertical-align: middle; }
+
+  .ov-table tbody tr { cursor: pointer; }
+  .ov-table tbody tr:active { background: #eef5ef; }
+
+  .ov-club { border-left: 4px solid #444; padding-left: 10px; }
+  .ov-club-name { font-weight: 600; font-size: 15px; }
+  .ov-club-meta { font-size: 12px; color: #777; margin-top: 2px; }
+
+  .ov-num { text-align: center; width: 52px; font-variant-numeric: tabular-nums; }
+  .ov-first { text-align: center; width: 58px; font-weight: 600; white-space: nowrap; }
+
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
     #filters-btn { display: block; }
+    #overzicht-btn { display: block; }
     #filter-overlay.open { display: flex; }
   }
 </style>
@@ -636,6 +684,7 @@
     </div>
   </div>
   <button id="filters-btn">Filters</button>
+  <button id="overzicht-btn">Overzicht</button>
   <span id="status"></span>
   <button id="banen-btn">Banen</button>
 </div>
@@ -1154,6 +1203,11 @@
   // newly added courses are included automatically without any migration.
   const excludedCourses = new Set();
 
+  // Mobile-only view state. On phones the default view is the Overzicht summary;
+  // tapping a club drills into the full table filtered to that club.
+  let selectedClub = null;  // null = Overzicht; a course name = detail view
+  const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
+
   try {
     const saved = JSON.parse(localStorage.getItem('userCoords'));
     if (saved && typeof saved.lat === 'number' && typeof saved.lon === 'number') userCoords = saved;
@@ -1370,9 +1424,18 @@
     applyActiveFromSet('#hoogte-group', hoogteFilter);
 
     filterOverlay.classList.remove('open');
+    selectedClub = null;  // applying filters returns to the Overzicht
     fetchData();
     if (maxKm !== null && !userCoords) openLocModal();
   });
+
+  document.getElementById('overzicht-btn').addEventListener('click', () => {
+    selectedClub = null;
+    applyFilters();
+  });
+
+  // Re-render when crossing the mobile/desktop breakpoint so the view switches cleanly.
+  window.matchMedia('(max-width: 600px)').addEventListener('change', () => applyFilters());
 
   // Banen modal — per-device course selection
   const banenOverlay = document.getElementById('banen-overlay');
@@ -1570,7 +1633,111 @@
 
     message.style.display = 'none';
 
+    const overzichtBtn = document.getElementById('overzicht-btn');
+
+    if (isMobile()) {
+      if (selectedClub) {
+        const clubRows = visible.filter(r => r.course === selectedClub);
+        if (clubRows.length === 0) selectedClub = null;  // club fell out of the filter → back to overview
+        else { overzichtBtn.classList.remove('active'); renderTable(clubRows, container); return; }
+      }
+      overzichtBtn.classList.add('active');
+      renderOverview(visible, container);
+      return;
+    }
+
+    overzichtBtn.classList.remove('active');
     renderTable(visible, container);
+  }
+
+  function renderOverview(data, container) {
+    const groups = new Map();
+    for (const r of data) {
+      let g = groups.get(r.course);
+      if (!g) { g = { course: r.course, configs: new Set(), count: 0, first: r.time }; groups.set(r.course, g); }
+      g.configs.add(`${r.sub_course}|||${r.holes}`);
+      g.count++;
+      if (r.time < g.first) g.first = r.time;
+    }
+
+    const rows = [...groups.values()].sort((a, b) => {
+      if (userCoords) {
+        const ka = courseKm(a.course) ?? Infinity;
+        const kb = courseKm(b.course) ?? Infinity;
+        if (ka !== kb) return ka - kb;
+      } else {
+        const oa = COURSE_ORDER.indexOf(a.course);
+        const ob = COURSE_ORDER.indexOf(b.course);
+        if (oa !== ob) return (oa === -1 ? 999 : oa) - (ob === -1 ? 999 : ob);
+      }
+      return a.course.localeCompare(b.course);
+    });
+
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+    const table = document.createElement('table');
+    table.className = 'ov-table';
+
+    const thead = document.createElement('thead');
+    const htr = document.createElement('tr');
+    [['Club', 'ov-th-club'], ['Banen', ''], ['Tee times', ''], ['Eerste', '']].forEach(([label, cls]) => {
+      const th = document.createElement('th');
+      th.textContent = label;
+      if (cls) th.className = cls;
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    for (const g of rows) {
+      const tr = document.createElement('tr');
+      tr.addEventListener('click', () => { selectedClub = g.course; applyFilters(); });
+
+      const clubTd = document.createElement('td');
+      const clubWrap = document.createElement('div');
+      clubWrap.className = 'ov-club';
+      const colors = COURSE_COLORS[g.course] || { main: '#444' };
+      clubWrap.style.borderLeftColor = colors.main;
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'ov-club-name';
+      nameDiv.textContent = g.course;
+      clubWrap.appendChild(nameDiv);
+
+      const parts = [];
+      const km = courseKm(g.course);
+      if (km !== null) parts.push(Math.round(km) + ' km');
+      const t = COURSE_TAGS[g.course];
+      if (t) { t.landschap.forEach(l => parts.push(cap(l))); parts.push(cap(t.hoogte)); }
+      if (parts.length) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'ov-club-meta';
+        metaDiv.textContent = parts.join(' · ');
+        clubWrap.appendChild(metaDiv);
+      }
+      clubTd.appendChild(clubWrap);
+
+      const banenTd = document.createElement('td');
+      banenTd.className = 'ov-num';
+      banenTd.textContent = g.configs.size;
+
+      const ttTd = document.createElement('td');
+      ttTd.className = 'ov-num';
+      ttTd.textContent = g.count;
+
+      const firstTd = document.createElement('td');
+      firstTd.className = 'ov-first';
+      firstTd.textContent = g.first;
+
+      tr.append(clubTd, banenTd, ttTd, firstTd);
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+
+    const oldTable = container.querySelector('table');
+    if (oldTable) oldTable.remove();
+    container.appendChild(table);
   }
 
   function renderTable(data, container) {
