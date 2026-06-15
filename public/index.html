@@ -292,8 +292,8 @@
   /* Time dropdowns only hold "10:00", so keep them small and give all the
      remaining width to Datum — the native date control (esp. on iOS) is much
      wider than a time select and overlaps it if its column is too narrow. */
-  .m-row .m-date { flex: 1 1 auto; }
-  .m-row .m-time { flex: 0 0 auto; }
+  .m-row .m-date { flex: 0 0 auto; }
+  .m-row .m-time { flex: 0 1 82px; }
 
   .m-filter-label {
     font-size: 15px;
@@ -326,16 +326,16 @@
 
   #m-from-time, #m-to-time, #m-date-input {
     font-family: inherit;
-    font-size: 13px;
-    padding: 7px 5px;
+    font-size: 15px;
+    padding: 8px 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     outline: none;
-    width: 100%;
     min-width: 0;
   }
 
-  #m-from-time, #m-to-time { width: 68px; }
+  #m-date-input { width: 150px; }
+  #m-from-time, #m-to-time { width: 100%; }
 
   .m-dist-row {
     display: flex;
