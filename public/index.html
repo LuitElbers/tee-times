@@ -281,12 +281,18 @@
 
   .m-row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
   }
 
   .m-row .m-filter-group {
     flex: 1;
     min-width: 0;
+  }
+
+  /* Datum needs more room than the time dropdowns: the native date control
+     (especially on iOS) is intrinsically wider than a "10:00" select. */
+  .m-row .m-filter-group:first-child {
+    flex: 1.5;
   }
 
   .m-filter-label {
@@ -320,8 +326,8 @@
 
   #m-from-time, #m-to-time, #m-date-input {
     font-family: inherit;
-    font-size: 15px;
-    padding: 8px 10px;
+    font-size: 13px;
+    padding: 7px 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
     outline: none;
@@ -722,11 +728,11 @@
     <span style="width:40px"></span>
   </div>
   <div id="overlay-body">
-    <div class="m-filter-group">
-      <label class="m-filter-label" for="m-date-input">Datum</label>
-      <input type="date" id="m-date-input">
-    </div>
     <div class="m-row">
+      <div class="m-filter-group">
+        <label class="m-filter-label" for="m-date-input">Datum</label>
+        <input type="date" id="m-date-input">
+      </div>
       <div class="m-filter-group">
         <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
         <select id="m-from-time">
