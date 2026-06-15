@@ -91,6 +91,20 @@
     margin-left: auto;
   }
 
+  #loading-row {
+    display: none;
+    flex-shrink: 0;
+    text-align: center;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8a5a00;
+    background: #fff6e0;
+    border-bottom: 1px solid #f0e0b0;
+  }
+
+  #loading-row.show { display: block; }
+
   #table-container {
     flex: 1;
     min-height: 0;
@@ -701,6 +715,8 @@
   <span id="status"></span>
   <button id="banen-btn">Banen</button>
 </div>
+
+<div id="loading-row">Verversen…</div>
 
 <div id="filter-overlay">
   <div id="overlay-header">
@@ -1576,12 +1592,14 @@
     if (e.target === banenOverlay) banenOverlay.classList.remove('open');
   });
 
+  const loadingRow = document.getElementById('loading-row');
+  function setLoading(on) { loadingRow.classList.toggle('show', on); }
+
   async function fetchData() {
-    const status = document.getElementById('status');
     const container = document.getElementById('table-container');
     const message = document.getElementById('message');
 
-    status.textContent = 'Vernieuwen…';
+    setLoading(true);
 
     const params = new URLSearchParams({
       date: dateInput.value,
@@ -1597,7 +1615,7 @@
       if (!res.ok) throw new Error(`Serverfout ${res.status}`);
       data = await res.json();
     } catch (err) {
-      status.textContent = '';
+      setLoading(false);
       message.style.display = 'flex';
       message.className = 'error';
       message.textContent = `Laden van tee times mislukt: ${err.message}`;
@@ -1606,7 +1624,7 @@
       return;
     }
 
-    status.textContent = '';
+    setLoading(false);
     lastData = data;
     applyFilters();
   }
