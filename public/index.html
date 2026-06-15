@@ -267,11 +267,16 @@
 
   .m-row {
     display: flex;
-    gap: 14px;
+    gap: 10px;
   }
 
   .m-row .m-filter-group {
     flex: 1;
+    min-width: 0;
+  }
+
+  .m-row .m-filter-group:first-child {
+    flex: 1.4;
   }
 
   .m-filter-label {
@@ -311,6 +316,7 @@
     border-radius: 4px;
     outline: none;
     width: 100%;
+    min-width: 0;
   }
 
   .m-dist-row {
@@ -589,10 +595,12 @@
     #filters-btn { display: block; }
     #overzicht-btn.visible { display: block; }
     #filter-overlay.open { display: flex; }
-    #filter-bar { gap: 6px 8px; padding: 8px 10px; flex-wrap: nowrap; }
+    #filter-bar { gap: 8px; padding: 8px 10px; flex-wrap: nowrap; }
     #status { display: none; }
     #filters-btn, #overzicht-btn, #banen-btn { padding: 5px 9px; font-size: 13px; }
-    #banen-btn { margin-left: auto; }
+    #filters-btn { order: 1; }
+    #banen-btn { order: 2; }
+    #overzicht-btn { order: 3; }
     #date-input { max-width: 132px; }
   }
 </style>
