@@ -88,11 +88,11 @@
   /* Desktop: stack each filter as name-on-top, options-below, columns aligned. */
   @media (min-width: 601px) {
     #filter-bar { align-items: flex-end; gap: 11px 10px; }
-    .filter-group { flex-direction: column; align-items: flex-end; gap: 5px; }
+    .filter-group { flex-direction: column; align-items: flex-start; gap: 5px; }
     .filter-group > label {
-      font-size: 12px; font-weight: 600; color: #555; white-space: nowrap; text-align: right;
+      font-size: 12px; font-weight: 600; color: #555; white-space: nowrap; text-align: left;
     }
-    .fg-controls { display: flex; align-items: center; gap: 5px; }
+    .fg-controls { display: flex; align-items: center; gap: 5px; min-height: 27px; }
     .fg-controls label {
       font-size: 12px; font-weight: 400; color: #111;
       display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
@@ -667,7 +667,7 @@
     </div>
   </div>
   <div class="filter-group desktop-filter">
-    <label>Type:</label>
+    <label>Baan type:</label>
     <div class="fg-controls">
       <label><input type="checkbox" id="include-championship" checked> Championship</label>
       <label><input type="checkbox" id="include-par3"> Par 3/4</label>
