@@ -88,9 +88,9 @@
   /* Desktop: stack each filter as name-on-top, options-below, columns aligned. */
   @media (min-width: 601px) {
     #filter-bar { align-items: flex-end; gap: 11px 10px; }
-    .filter-group { flex-direction: column; align-items: center; gap: 5px; }
+    .filter-group { flex-direction: column; align-items: flex-end; gap: 5px; }
     .filter-group > label {
-      font-size: 12px; font-weight: 600; color: #555; white-space: nowrap;
+      font-size: 12px; font-weight: 600; color: #555; white-space: nowrap; text-align: right;
     }
     .fg-controls { display: flex; align-items: center; gap: 5px; }
     .fg-controls label {
