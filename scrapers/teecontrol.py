@@ -6,13 +6,13 @@ from models import TeeTime
 
 _client = httpx.AsyncClient(timeout=15.0)
 
-# api.teecontrol.com enforces a per-IP request-RATE limit (a single request is
-# fine; any real concurrent fan-out 429s). Only a global throttle (min gap between
-# request starts) reliably serves all 20 clubs. Tokens cache 55min and a 60s
-# response cache makes warm calls instant, so only the first cold call per minute
-# pays the full serial cost. Retry 429s with backoff as a safety net.
-# NOTE: cold-start latency ~25-35s for 20 clubs — known perf issue, optimize later.
-_MIN_INTERVAL = 0.1
+# api.teecontrol.com enforces a per-IP request-RATE limit. A global throttle (min
+# gap between request starts) is the only thing that reliably serves all clubs.
+# This backend is now warmer-only (warm.py fetches 23 clubs × 7 days), so it pays
+# for completeness over latency: 0.1s (10/s) sustained still triggered 429 storms
+# across that many requests, so we run gentler. Tokens cache 55min; 429s retry
+# with backoff as a safety net. If a future run still shows 429s, raise this.
+_MIN_INTERVAL = 0.3
 _rate_lock = asyncio.Lock()
 _next_slot = 0.0
 _resp_cache: TTLCache = TTLCache(maxsize=512, ttl=60)

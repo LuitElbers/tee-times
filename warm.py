@@ -25,7 +25,7 @@ OUT = Path(__file__).parent / "warm.json"
 # at once 429s and gets silently dropped). Fetch a few clubs at a time and retry
 # transient failures, so coverage is complete and we can tell "empty" from "failed".
 _CONCURRENCY = 3
-_ATTEMPTS = 2
+_ATTEMPTS = 3
 
 
 def _dates() -> list[str]:
