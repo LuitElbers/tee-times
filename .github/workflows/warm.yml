@@ -2,7 +2,10 @@ name: warm
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    # teecontrol's rate limit forces a gentle ~16-min warm; keep the interval
+    # safely above the run time so scheduled runs never back up (cancel-in-progress
+    # is false). 20 min = ~16-min run + margin.
+    - cron: "*/20 * * * *"
   workflow_dispatch:
 
 permissions:
