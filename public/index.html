@@ -1215,16 +1215,28 @@
     return haversineKm(userCoords, c);
   }
 
-  function todayStr() {
-    const d = new Date();
+  function fmtDate(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
+  function todayStr() { return fmtDate(new Date()); }
+  function tomorrowStr() { const d = new Date(); d.setDate(d.getDate() + 1); return fmtDate(d); }
+
+  // Default to tomorrow, but keep the user's last picked date until it falls into
+  // the past (YYYY-MM-DD compares chronologically as a string).
+  function initialDate() {
+    let saved = null;
+    try { saved = localStorage.getItem('selectedDate'); } catch (e) { /* storage unavailable */ }
+    return (saved && saved >= todayStr()) ? saved : tomorrowStr();
+  }
+  function saveSelectedDate() {
+    try { localStorage.setItem('selectedDate', dateInput.value); } catch (e) { /* storage unavailable */ }
+  }
 
   const dateInput = document.getElementById('date-input');
-  dateInput.value = todayStr();
+  dateInput.value = initialDate();
 
   let players = 2;
   let holes = '18';
@@ -1363,7 +1375,7 @@
 
   setupToggle('players-group', v => { players = v; fetchData(); });
   setupToggle('holes-group',   v => { holes   = v; fetchData(); });
-  dateInput.addEventListener('change', fetchData);
+  dateInput.addEventListener('change', () => { saveSelectedDate(); fetchData(); });
 
   // Multi-select toggle groups for landscape/elevation (any number active).
   function applyActiveFromSet(groupSelector, set) {
@@ -1446,7 +1458,7 @@
     if (mHolesBtn) holes = mHolesBtn.dataset.value;
 
     const mDate = document.getElementById('m-date-input').value;
-    if (mDate) dateInput.value = mDate;
+    if (mDate) { dateInput.value = mDate; saveSelectedDate(); }
 
     includeChampionship = document.getElementById('m-include-championship').checked;
     includePar3 = document.getElementById('m-include-par3').checked;
