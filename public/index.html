@@ -85,6 +85,20 @@
     background: #f0f0f0;
   }
 
+  /* Desktop: stack each filter as name-on-top, options-below, columns aligned. */
+  @media (min-width: 601px) {
+    #filter-bar { align-items: flex-end; gap: 12px 18px; }
+    .filter-group { flex-direction: column; align-items: center; gap: 5px; }
+    .filter-group > label {
+      font-size: 12px; font-weight: 600; color: #555; white-space: nowrap;
+    }
+    .fg-controls { display: flex; align-items: center; gap: 6px; }
+    .fg-controls label {
+      font-size: 13px; font-weight: 400; color: #111;
+      display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+  }
+
   #status {
     font-size: 13px;
     color: #888;
@@ -649,8 +663,11 @@
     </div>
   </div>
   <div class="filter-group desktop-filter">
-    <label><input type="checkbox" id="include-championship" checked> Championship</label>
-    <label><input type="checkbox" id="include-par3"> Par 3/4</label>
+    <label>Type:</label>
+    <div class="fg-controls">
+      <label><input type="checkbox" id="include-championship" checked> Championship</label>
+      <label><input type="checkbox" id="include-par3"> Par 3/4</label>
+    </div>
   </div>
   <div class="filter-group desktop-filter">
     <label for="from-time">Tijd vanaf:</label>
@@ -688,15 +705,17 @@
   </div>
   <div class="filter-group desktop-filter">
     <label for="distance">Afstand:</label>
-    <select id="distance">
-      <option value="any" selected>Alle</option>
-      <option value="10">&#8804; 10 km</option>
-      <option value="25">&#8804; 25 km</option>
-      <option value="50">&#8804; 50 km</option>
-      <option value="100">&#8804; 100 km</option>
-    </select>
-    <button id="loc-btn" title="Locatie instellen">&#128205;</button>
-    <span id="loc-indicator"></span>
+    <div class="fg-controls">
+      <select id="distance">
+        <option value="any" selected>Alle</option>
+        <option value="10">&#8804; 10 km</option>
+        <option value="25">&#8804; 25 km</option>
+        <option value="50">&#8804; 50 km</option>
+        <option value="100">&#8804; 100 km</option>
+      </select>
+      <button id="loc-btn" title="Locatie instellen">&#128205;</button>
+      <span id="loc-indicator"></span>
+    </div>
   </div>
   <div class="filter-group desktop-filter">
     <label>Landschap:</label>
