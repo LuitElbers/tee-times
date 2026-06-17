@@ -123,6 +123,19 @@
 
   #loading-row.show { display: block; }
 
+  #notice-row {
+    display: none;
+    flex-shrink: 0;
+    text-align: center;
+    padding: 6px 16px;
+    font-size: 12px;
+    color: #555;
+    background: #eef3f8;
+    border-bottom: 1px solid #d6e0ea;
+  }
+
+  #notice-row.show { display: block; }
+
   #table-container {
     flex: 1;
     min-height: 0;
@@ -745,6 +758,7 @@
 </div>
 
 <div id="loading-row">Verversen…</div>
+<div id="notice-row"></div>
 
 <div id="filter-overlay">
   <div id="overlay-header">
@@ -1633,12 +1647,32 @@
   });
 
   const loadingRow = document.getElementById('loading-row');
+  const noticeRow = document.getElementById('notice-row');
   function setLoading(on) { loadingRow.classList.toggle('show', on); }
+  function setNotices(list) {
+    if (list && list.length) {
+      noticeRow.textContent = list.join('  •  ');
+      noticeRow.classList.add('show');
+    } else {
+      noticeRow.classList.remove('show');
+    }
+  }
+
+  // Dates beyond the warmed window (today..+6) fetch the slow courses live, which is slower.
+  function isFarDate(ds) {
+    const d = new Date(); d.setDate(d.getDate() + 7);
+    return ds >= fmtDate(d);
+  }
 
   async function fetchData() {
     const container = document.getElementById('table-container');
     const message = document.getElementById('message');
 
+    setNotices([]);
+    const far = isFarDate(dateInput.value);
+    loadingRow.textContent = far
+      ? 'Verversen… data meer dan 7 dagen vooruit duurt iets langer…'
+      : 'Verversen…';
     setLoading(true);
 
     const params = new URLSearchParams({
@@ -1653,7 +1687,9 @@
     try {
       const res = await fetch(`/api/tee-times?${params}`);
       if (!res.ok) throw new Error(`Serverfout ${res.status}`);
-      data = await res.json();
+      const payload = await res.json();
+      data = Array.isArray(payload) ? payload : (payload.tee_times || []);
+      setNotices(Array.isArray(payload) ? [] : payload.notices);
     } catch (err) {
       setLoading(false);
       message.style.display = 'flex';

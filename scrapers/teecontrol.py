@@ -19,6 +19,13 @@ _resp_cache: TTLCache = TTLCache(maxsize=512, ttl=60)
 _token_cache: TTLCache = TTLCache(maxsize=64, ttl=55 * 60)
 
 
+def set_min_interval(seconds: float) -> None:
+    """Lower the throttle for the web app's on-demand single-date fetches (far
+    dates). The warmer runs in a separate process and keeps the gentler default."""
+    global _MIN_INTERVAL
+    _MIN_INTERVAL = seconds
+
+
 async def _throttle() -> None:
     global _next_slot
     async with _rate_lock:
