@@ -1305,12 +1305,37 @@
     if (Array.isArray(savedEx)) savedEx.forEach(c => excludedCourses.add(c));
   } catch (e) { /* no/invalid saved exclusions */ }
 
+  // Persisted filter preferences (per-device). Date + location + exclusions are stored
+  // under their own keys; everything else (players/holes/times/baan type/distance) here.
+  function saveFilters() {
+    try {
+      localStorage.setItem('filterPrefs', JSON.stringify({
+        players, holes, fromTime, toTime, includePar3, includeChampionship,
+        maxKm, landschap: [...landschapFilter], hoogte: [...hoogteFilter],
+      }));
+    } catch (e) { /* storage unavailable */ }
+  }
+  try {
+    const f = JSON.parse(localStorage.getItem('filterPrefs'));
+    if (f && typeof f === 'object') {
+      if (f.players != null) players = String(f.players);
+      if (f.holes != null) holes = String(f.holes);
+      if (typeof f.fromTime === 'string') fromTime = f.fromTime;
+      if (typeof f.toTime === 'string') toTime = f.toTime;
+      if (typeof f.includePar3 === 'boolean') includePar3 = f.includePar3;
+      if (typeof f.includeChampionship === 'boolean') includeChampionship = f.includeChampionship;
+      if (f.maxKm === null || typeof f.maxKm === 'number') maxKm = f.maxKm;
+      if (Array.isArray(f.landschap)) f.landschap.forEach(v => landschapFilter.add(v));
+      if (Array.isArray(f.hoogte)) f.hoogte.forEach(v => hoogteFilter.add(v));
+    }
+  } catch (e) { /* no/invalid saved filters */ }
+
   // Desktop filter listeners
   const fromTimeSelect = document.getElementById('from-time');
-  fromTimeSelect.addEventListener('change', () => { fromTime = fromTimeSelect.value; applyFilters(); });
+  fromTimeSelect.addEventListener('change', () => { fromTime = fromTimeSelect.value; saveFilters(); applyFilters(); });
 
   const toTimeSelect = document.getElementById('to-time');
-  toTimeSelect.addEventListener('change', () => { toTime = toTimeSelect.value; applyFilters(); });
+  toTimeSelect.addEventListener('change', () => { toTime = toTimeSelect.value; saveFilters(); applyFilters(); });
 
   // Distance + location
   const distanceSelect = document.getElementById('distance');
@@ -1326,6 +1351,7 @@
   function onDistanceChange(val) {
     maxKm = val === 'any' ? null : Number(val);
     syncDistanceControls(val);
+    saveFilters();
     if (maxKm !== null && !userCoords) {
       openLocModal();
     } else {
@@ -1346,7 +1372,7 @@
   document.getElementById('loc-btn').addEventListener('click', openLocModal);
   document.getElementById('loc-close').addEventListener('click', () => {
     closeLocModal();
-    if (!userCoords) { maxKm = null; syncDistanceControls('any'); applyFilters(); }
+    if (!userCoords) { maxKm = null; syncDistanceControls('any'); saveFilters(); applyFilters(); }
   });
   locOverlay.addEventListener('click', e => { if (e.target === locOverlay) document.getElementById('loc-close').click(); });
 
@@ -1394,10 +1420,10 @@
   updateLocIndicator();
 
   const includePar3Checkbox = document.getElementById('include-par3');
-  includePar3Checkbox.addEventListener('change', () => { includePar3 = includePar3Checkbox.checked; fetchData(); });
+  includePar3Checkbox.addEventListener('change', () => { includePar3 = includePar3Checkbox.checked; saveFilters(); fetchData(); });
 
   const includeChampionshipCheckbox = document.getElementById('include-championship');
-  includeChampionshipCheckbox.addEventListener('change', () => { includeChampionship = includeChampionshipCheckbox.checked; fetchData(); });
+  includeChampionshipCheckbox.addEventListener('change', () => { includeChampionship = includeChampionshipCheckbox.checked; saveFilters(); fetchData(); });
 
   function setupToggle(groupId, onChange) {
     const group = document.getElementById(groupId);
@@ -1410,8 +1436,8 @@
     });
   }
 
-  setupToggle('players-group', v => { players = v; fetchData(); });
-  setupToggle('holes-group',   v => { holes   = v; fetchData(); });
+  setupToggle('players-group', v => { players = v; saveFilters(); fetchData(); });
+  setupToggle('holes-group',   v => { holes   = v; saveFilters(); fetchData(); });
   dateInput.addEventListener('change', () => { saveSelectedDate(); fetchData(); });
 
   // Multi-select toggle groups for landscape/elevation (any number active).
@@ -1428,6 +1454,7 @@
       const v = btn.dataset.value;
       if (set.has(v)) set.delete(v); else set.add(v);
       btn.classList.toggle('active');
+      saveFilters();
       applyFilters();
     });
   }
@@ -1516,6 +1543,7 @@
 
     filterOverlay.classList.remove('open');
     selectedClub = null;  // applying filters returns to the Overzicht
+    saveFilters();
     fetchData();
     if (maxKm !== null && !userCoords) openLocModal();
   });
@@ -1671,7 +1699,7 @@
     setNotices([]);
     const far = isFarDate(dateInput.value);
     loadingRow.textContent = far
-      ? 'Verversen… data meer dan 7 dagen vooruit duurt iets langer…'
+      ? 'Verversen… data meer dan 7 dagen vooruit duurt 30-40 seconden…'
       : 'Verversen…';
     setLoading(true);
 
@@ -2032,6 +2060,22 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) recomputeStickyLayout(); });
   window.addEventListener('orientationchange', () => requestAnimationFrame(recomputeStickyLayout));
   window.addEventListener('resize', () => requestAnimationFrame(syncHeaderOffset));
+
+  // Reflect restored filter prefs in the desktop controls before first render.
+  function syncDesktopFilters() {
+    document.querySelectorAll('#players-group .toggle-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.value === String(players)));
+    document.querySelectorAll('#holes-group .toggle-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.value === String(holes)));
+    fromTimeSelect.value = fromTime;
+    toTimeSelect.value = toTime;
+    includePar3Checkbox.checked = includePar3;
+    includeChampionshipCheckbox.checked = includeChampionship;
+    syncDistanceControls(maxKm === null ? 'any' : String(maxKm));
+    applyActiveFromSet('#landschap-group', landschapFilter);
+    applyActiveFromSet('#hoogte-group', hoogteFilter);
+  }
+  syncDesktopFilters();
 
   fetchData();
   if (!userCoords) openLocModal();
