@@ -32,6 +32,14 @@ async def index():
     return RedirectResponse("/index.html")
 
 
+@app.get("/api/_sleeptest")
+async def _sleeptest(secs: float = Query(default=20.0)):
+    import time as _t
+    start = _t.time()
+    await asyncio.sleep(secs)
+    return {"requested": secs, "actual": round(_t.time() - start, 1)}
+
+
 @app.get("/api/tee-times")
 async def get_tee_times(
     date: str = Query(default=None),
