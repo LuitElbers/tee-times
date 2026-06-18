@@ -40,6 +40,12 @@ CLUBS = [
     {"api_url": "https://batouwe.baan.intogolf.nl/api/igg", "course_name": "De Batouwe", "booking_url": "https://batouwe.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://keppelse.baan.intogolf.nl/api/igg", "course_name": "Keppelse", "booking_url": "https://keppelse.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://sallandsche.baan.intogolf.nl/api/igg", "course_name": "Sallandsche", "booking_url": "https://sallandsche.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://maasduinen.baan.intogolf.nl/api/igg", "course_name": "Maasduinen", "booking_url": "https://maasduinen.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://brunssummerheide.baan.intogolf.nl/api/igg", "course_name": "Brunssummerheide", "booking_url": "https://brunssummerheide.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://heidemeer.baan.intogolf.nl/api/igg", "course_name": "Heidemeer", "booking_url": "https://heidemeer.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://martensplek.baan.intogolf.nl/api/igg", "course_name": "Martensplek", "booking_url": "https://martensplek.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://semslanden.baan.intogolf.nl/api/igg", "course_name": "De Semslanden", "booking_url": "https://semslanden.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://deherkenbosche.baan.intogolf.nl/api/igg", "course_name": "De Herkenbosche", "booking_url": "https://deherkenbosche.golfer.intogolf.nl/#/teetimes"},
 ]
 
 

@@ -250,6 +250,23 @@ COURSES = [
             {"baan": 6, "sub": "9 holes", "holes": 9, "is_par3": False},
         ],
     },
+    {
+        "host": "kapelkeshof.teetime.e-golf4u.nl",
+        "name": "Kapelkeshof",
+        "baans": [
+            {"baan": 5, "sub": "Kapelkeshofbaan", "holes": 18, "is_par3": False},
+            {"baan": 8, "sub": "Solarisbaan 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "zuiddrenthe.teetime.e-golf4u.nl",
+        "name": "Zuid-Drenthe",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 7, "sub": "Eerste 9", "holes": 9, "is_par3": False},
+            {"baan": 8, "sub": "Par 3 baan", "holes": 9, "is_par3": True},
+        ],
+    },
 ]
 
 

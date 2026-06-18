@@ -22,6 +22,10 @@ COURSES = [
     {"slug": "golfpark-soestduinen", "name": "Soestduinen", "is_par3": False, "holes": [9, 18]},
     {"slug": "golfpark-de-bonte-bij", "name": "De Bonte Bij", "is_par3": False, "holes": [9]},
     {"slug": "golfbaan-de-lage-mors", "name": "De Lage Mors", "is_par3": False, "holes": [9, 18]},
+    {"slug": "eyckenduyn", "name": "Eyckenduyn", "is_par3": False, "holes": [9, 18]},
+    {"slug": "golfclub-gaasterland", "name": "Gaasterland", "is_par3": False, "holes": [9, 18]},
+    {"slug": "golfclub-holthuizen", "name": "Holthuizen", "is_par3": False, "holes": [9, 18]},
+    {"slug": "golfparc-sandur", "name": "Sandur", "is_par3": False, "holes": [9, 18]},
 ]
 
 

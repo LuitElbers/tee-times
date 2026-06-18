@@ -941,6 +941,9 @@
     "De Hattemse", "Winterswijk", "De Scherpenbergh", "Engelenburg", "De Batouwe",
     "Keppelse", "Sallandsche", "The Links Valley", "Hooge Graven", "Zwolle",
     "De Koepel", "Rosendaelsche", "De Dorpswaard", "De Lage Mors",
+    "Maasduinen", "Brunssummerheide", "Heidemeer", "Martensplek", "De Semslanden",
+    "De Peelse Golf", "Drentsche", "Ameland", "Kapelkeshof", "Zuid-Drenthe",
+    "De Herkenbosche", "Eyckenduyn", "Gaasterland", "Holthuizen", "Sandur",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -1054,6 +1057,21 @@
     "Rosendaelsche":       { main: "#6a1e45", sub: "#9c3468" },
     "De Dorpswaard":       { main: "#6a1e24", sub: "#9c343b" },
     "De Lage Mors":        { main: "#6a391e", sub: "#9c5934" },
+    "Maasduinen":          { main: "#2e7424", sub: "#46a63a" },
+    "Brunssummerheide":    { main: "#24743b", sub: "#3aa658" },
+    "Heidemeer":           { main: "#24745b", sub: "#3aa683" },
+    "Martensplek":         { main: "#246d74", sub: "#3a9da6" },
+    "De Semslanden":       { main: "#244d74", sub: "#3a71a6" },
+    "De Peelse Golf":      { main: "#242e74", sub: "#3a46a6" },
+    "Drentsche":           { main: "#3b2474", sub: "#583aa6" },
+    "Ameland":             { main: "#5b2474", sub: "#833aa6" },
+    "Kapelkeshof":         { main: "#74246d", sub: "#a63a9d" },
+    "Zuid-Drenthe":        { main: "#74244d", sub: "#a63a71" },
+    "De Herkenbosche":     { main: "#74242e", sub: "#a63a46" },
+    "Eyckenduyn":          { main: "#743b24", sub: "#a6583a" },
+    "Gaasterland":         { main: "#745b24", sub: "#a6833a" },
+    "Holthuizen":          { main: "#6d7424", sub: "#9da63a" },
+    "Sandur":              { main: "#4d7424", sub: "#71a63a" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -1169,6 +1187,21 @@
     "Rosendaelsche":       { lat: 52.02279, lon: 5.93265 },
     "De Dorpswaard":       { lat: 51.78109, lon: 5.32817 },
     "De Lage Mors":        { lat: 52.25728, lon: 6.73197 },
+    "Maasduinen":          { lat: 51.49967, lon: 6.17882 },
+    "Brunssummerheide":    { lat: 50.93632, lon: 6.01048 },
+    "Heidemeer":           { lat: 52.93865, lon: 5.93211 },
+    "Martensplek":         { lat: 52.75691, lon: 6.55938 },
+    "De Semslanden":       { lat: 52.98421, lon: 6.81073 },
+    "De Peelse Golf":      { lat: 51.38278, lon: 5.96709 },
+    "Drentsche":           { lat: 53.01900, lon: 6.52995 },
+    "Ameland":             { lat: 53.44991, lon: 5.65111 },
+    "Kapelkeshof":         { lat: 51.36690, lon: 5.94183 },
+    "Zuid-Drenthe":        { lat: 52.68404, lon: 6.93341 },
+    "De Herkenbosche":     { lat: 51.17282, lon: 6.06559 },
+    "Eyckenduyn":          { lat: 51.31815, lon: 6.00655 },
+    "Gaasterland":         { lat: 52.86743, lon: 5.54642 },
+    "Holthuizen":          { lat: 53.14050, lon: 6.44908 },
+    "Sandur":              { lat: 52.72863, lon: 6.91386 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -1285,6 +1318,21 @@
     "Rosendaelsche":       { landschap: ["bos"],        hoogte: "glooiend" },
     "De Dorpswaard":       { landschap: ["polder"],     hoogte: "" },
     "De Lage Mors":        { landschap: ["bos"],        hoogte: "" },
+    "Maasduinen":          { landschap: ["bos"],        hoogte: "plat" },
+    "Brunssummerheide":    { landschap: ["heide"],      hoogte: "glooiend" },
+    "Heidemeer":           { landschap: ["polder"],     hoogte: "plat" },
+    "Martensplek":         { landschap: ["bos"],        hoogte: "plat" },
+    "De Semslanden":       { landschap: ["polder"],     hoogte: "plat" },
+    "De Peelse Golf":      { landschap: ["heide"],      hoogte: "plat" },
+    "Drentsche":           { landschap: ["bos"],        hoogte: "plat" },
+    "Ameland":             { landschap: ["duinen"],     hoogte: "plat" },
+    "Kapelkeshof":         { landschap: ["bos"],        hoogte: "plat" },
+    "Zuid-Drenthe":        { landschap: ["polder"],     hoogte: "" },
+    "De Herkenbosche":     { landschap: ["bos"],        hoogte: "glooiend" },
+    "Eyckenduyn":          { landschap: ["bos"],        hoogte: "" },
+    "Gaasterland":         { landschap: ["bos"],        hoogte: "plat" },
+    "Holthuizen":          { landschap: ["bos"],        hoogte: "plat" },
+    "Sandur":              { landschap: ["polder"],     hoogte: "plat" },
   };
 
   function courseTagLabel(courseName) {
