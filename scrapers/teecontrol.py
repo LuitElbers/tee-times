@@ -92,6 +92,8 @@ COURSES = [
     {"origin": "https://golfbaantespelduyn.teecontrol.com", "course_name": "Tespelduyn", "booking_url": "https://golfbaantespelduyn.teecontrol.com/book"},
     {"origin": "https://egcp.teecontrol.com", "course_name": "Edese", "booking_url": "https://egcp.teecontrol.com/book"},
     {"origin": "https://gcdecompagnie.teecontrol.com", "course_name": "De Compagnie", "booking_url": "https://gcdecompagnie.teecontrol.com/book"},
+    {"origin": "https://linksvalley.teecontrol.com", "course_name": "The Links Valley", "booking_url": "https://linksvalley.teecontrol.com/book"},
+    {"origin": "https://hoogegraven.teecontrol.com", "course_name": "Hooge Graven", "booking_url": "https://hoogegraven.teecontrol.com/book"},
 ]
 
 API_BASE = "https://api.teecontrol.com"

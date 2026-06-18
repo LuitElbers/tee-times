@@ -33,6 +33,13 @@ CLUBS = [
     {"api_url": "https://kroonprins.baan.intogolf.nl/api/igg", "course_name": "De Kroonprins", "booking_url": "https://kroonprins.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://dronten.baan.intogolf.nl/api/igg", "course_name": "Golf Residentie Dronten", "booking_url": "https://dronten.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://delfland.baan.intogolf.nl/api/igg", "course_name": "Delfland", "booking_url": "https://www.delflandgolf.nl/reserveer-starttijd/reserveren-starttijd/"},
+    {"api_url": "https://hattemse.baan.intogolf.nl/api/igg", "course_name": "De Hattemse", "booking_url": "https://hattemse.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://winterswijk.baan.intogolf.nl/api/igg", "course_name": "Winterswijk", "booking_url": "https://winterswijk.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://scherpenbergh.baan.intogolf.nl/api/igg", "course_name": "De Scherpenbergh", "booking_url": "https://scherpenbergh.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://engelenburg.baan.intogolf.nl/api/igg", "course_name": "Engelenburg", "booking_url": "https://engelenburg.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://batouwe.baan.intogolf.nl/api/igg", "course_name": "De Batouwe", "booking_url": "https://batouwe.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://keppelse.baan.intogolf.nl/api/igg", "course_name": "Keppelse", "booking_url": "https://keppelse.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://sallandsche.baan.intogolf.nl/api/igg", "course_name": "Sallandsche", "booking_url": "https://sallandsche.golfer.intogolf.nl/#/teetimes"},
 ]
 
 

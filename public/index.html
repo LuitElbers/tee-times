@@ -938,6 +938,9 @@
     "Heiloo", "Kavel II Beemster", "Domburgsche", "Openbare Golfclub Dronten", "Putten", "Anderstein", "Flevoland", "Havelte", "Soestduinen", "De Bonte Bij",
     "Ockenburgh", "Capelle", "Concordia", "De Turfvaert", "Hoenshuis", "Twentse Golfpark",
     "Delfland",
+    "De Hattemse", "Winterswijk", "De Scherpenbergh", "Engelenburg", "De Batouwe",
+    "Keppelse", "Sallandsche", "The Links Valley", "Hooge Graven", "Zwolle",
+    "De Koepel", "Rosendaelsche", "De Dorpswaard", "De Lage Mors",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -1037,6 +1040,20 @@
     "Hoenshuis":           { main: "#4d287a", sub: "#7241ad" },
     "Twentse Golfpark":    { main: "#7a2855", sub: "#ad417d" },
     "Delfland":            { main: "#2a4a76", sub: "#3a64a0" },
+    "De Hattemse":         { main: "#6a5a1e", sub: "#9c8634" },
+    "Winterswijk":         { main: "#5a6a1e", sub: "#869c34" },
+    "De Scherpenbergh":    { main: "#3a6a1e", sub: "#599c34" },
+    "Engelenburg":         { main: "#1e6a24", sub: "#349c3b" },
+    "De Batouwe":          { main: "#1e6a44", sub: "#349c68" },
+    "Keppelse":            { main: "#1e6a65", sub: "#349c95" },
+    "Sallandsche":         { main: "#1e4f6a", sub: "#34779c" },
+    "The Links Valley":    { main: "#1e2f6a", sub: "#344a9c" },
+    "Hooge Graven":        { main: "#2f1e6a", sub: "#4a349c" },
+    "Zwolle":              { main: "#4f1e6a", sub: "#77349c" },
+    "De Koepel":           { main: "#6a1e65", sub: "#9c3495" },
+    "Rosendaelsche":       { main: "#6a1e45", sub: "#9c3468" },
+    "De Dorpswaard":       { main: "#6a1e24", sub: "#9c343b" },
+    "De Lage Mors":        { main: "#6a391e", sub: "#9c5934" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -1138,6 +1155,20 @@
     "Hoenshuis":           { lat: 50.88662, lon: 5.91798 },
     "Twentse Golfpark":    { lat: 52.26587, lon: 6.79240 },
     "Delfland":            { lat: 51.97956, lon: 4.32795 },
+    "De Hattemse":         { lat: 52.45466, lon: 6.07493 },
+    "Winterswijk":         { lat: 51.98446, lon: 6.76805 },
+    "De Scherpenbergh":    { lat: 52.14699, lon: 6.02040 },
+    "Engelenburg":         { lat: 52.09096, lon: 6.12882 },
+    "De Batouwe":          { lat: 51.92928, lon: 5.42097 },
+    "Keppelse":            { lat: 52.00785, lon: 6.20494 },
+    "Sallandsche":         { lat: 52.29453, lon: 6.16898 },
+    "The Links Valley":    { lat: 52.30026, lon: 5.68570 },
+    "Hooge Graven":        { lat: 52.54621, lon: 6.44891 },
+    "Zwolle":              { lat: 52.50229, lon: 6.14692 },
+    "De Koepel":           { lat: 52.34316, lon: 6.56290 },
+    "Rosendaelsche":       { lat: 52.02279, lon: 5.93265 },
+    "De Dorpswaard":       { lat: 51.78109, lon: 5.32817 },
+    "De Lage Mors":        { lat: 52.25728, lon: 6.73197 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -1240,6 +1271,20 @@
     "Hoenshuis":           { landschap: ["bos"],        hoogte: "" },
     "Twentse Golfpark":    { landschap: ["bos"],        hoogte: "plat" },
     "Delfland":            { landschap: ["polder"],     hoogte: "plat" },
+    "De Hattemse":         { landschap: ["bos"],        hoogte: "glooiend" },
+    "Winterswijk":         { landschap: ["bos"],        hoogte: "plat" },
+    "De Scherpenbergh":    { landschap: ["bos"],        hoogte: "glooiend" },
+    "Engelenburg":         { landschap: ["bos"],        hoogte: "plat" },
+    "De Batouwe":          { landschap: ["polder"],     hoogte: "plat" },
+    "Keppelse":            { landschap: ["bos"],        hoogte: "plat" },
+    "Sallandsche":         { landschap: ["bos"],        hoogte: "plat" },
+    "The Links Valley":    { landschap: ["heide"],      hoogte: "heuvelachtig" },
+    "Hooge Graven":        { landschap: ["heide"],      hoogte: "plat" },
+    "Zwolle":              { landschap: ["bos"],        hoogte: "plat" },
+    "De Koepel":           { landschap: ["bos"],        hoogte: "plat" },
+    "Rosendaelsche":       { landschap: ["bos"],        hoogte: "glooiend" },
+    "De Dorpswaard":       { landschap: ["polder"],     hoogte: "" },
+    "De Lage Mors":        { landschap: ["bos"],        hoogte: "" },
   };
 
   function courseTagLabel(courseName) {

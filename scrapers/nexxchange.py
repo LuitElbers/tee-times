@@ -21,6 +21,7 @@ COURSES = [
     {"slug": "golf-club-havelte", "name": "Havelte", "is_par3": False, "holes": [9, 18]},
     {"slug": "golfpark-soestduinen", "name": "Soestduinen", "is_par3": False, "holes": [9, 18]},
     {"slug": "golfpark-de-bonte-bij", "name": "De Bonte Bij", "is_par3": False, "holes": [9]},
+    {"slug": "golfbaan-de-lage-mors", "name": "De Lage Mors", "is_par3": False, "holes": [9, 18]},
 ]
 
 

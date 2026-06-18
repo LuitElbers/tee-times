@@ -216,6 +216,40 @@ COURSES = [
             {"baan": 1, "sub": "Championship Course", "holes": 18, "is_par3": False},
         ],
     },
+    {
+        "host": "zwolle.teetime.e-golf4u.nl",
+        "name": "Zwolle",
+        "baans": [
+            {"baan": 1, "sub": "18 holes Boschwijk-Veldwijk", "holes": 18, "is_par3": False},
+            {"baan": 6, "sub": "Boschwijk 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 7, "sub": "Veldwijk 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "dekoepel.teetime.e-golf4u.nl",
+        "name": "De Koepel",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 1, "sub": "9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "rosendaelsche.teetime.e-golf4u.nl",
+        "name": "Rosendaelsche",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 6, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 7, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
+    {
+        "host": "dorpswaard.teetime.e-golf4u.nl",
+        "name": "De Dorpswaard",
+        "baans": [
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
+            {"baan": 6, "sub": "9 holes", "holes": 9, "is_par3": False},
+        ],
+    },
 ]
 
 
