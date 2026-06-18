@@ -548,6 +548,24 @@
     color: #666;
   }
 
+  /* small (i) info tooltip: hover on desktop, tap-to-open on mobile */
+  .info-tip { position: relative; display: inline-block; vertical-align: middle; cursor: pointer; }
+  .info-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #1c5226; color: #fff; font-size: 10px; font-weight: 700;
+    font-style: italic; font-family: Georgia, serif; line-height: 1;
+  }
+  .info-bubble {
+    display: none; position: absolute; z-index: 2000; top: 150%; left: 0;
+    width: 250px; max-width: 70vw; background: #fff; color: #333;
+    border: 1px solid #bbb; border-radius: 6px; padding: 9px 11px;
+    font-size: 12px; font-weight: 400; font-style: normal; line-height: 1.45;
+    box-shadow: 0 2px 10px rgba(0,0,0,.22); white-space: normal; text-align: left;
+  }
+  .info-bubble.right { left: auto; right: 0; }
+  .info-tip:hover .info-bubble, .info-tip.open .info-bubble { display: block; }
+
   .banen-intro { font-size: 13px; color: #666; margin: 4px 0 14px; line-height: 1.4; }
 
   #banen-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -739,7 +757,7 @@
     </div>
   </div>
   <div class="filter-group desktop-filter">
-    <label>Hoogteverschil:</label>
+    <label>Hoogteverschil <span class="info-tip"><span class="info-icon">i</span><span class="info-bubble right">De hoogteverschil-classificatie is automatisch berekend uit AHN-hoogtekaarten: we meten de gemiddelde steilheid van het terrein op de baan. Plat (&lt;3°), glooiend (3–5°), heuvelachtig (&gt;5°) — gebaseerd op gemeten data, niet op folders of reputatie. Een enkele baan ontbreekt nog (–). Klopt een classificatie volgens jou niet? Laat het weten — correcties zijn welkom!</span></span>:</label>
     <div class="toggle-group" id="hoogte-group">
       <button class="toggle-btn" data-value="plat">Plat</button>
       <button class="toggle-btn" data-value="glooiend">Glooiend</button>
@@ -853,7 +871,7 @@
       </div>
     </div>
     <div class="m-filter-group">
-      <span class="m-filter-label">Hoogteverschil</span>
+      <span class="m-filter-label">Hoogteverschil <span class="info-tip"><span class="info-icon">i</span><span class="info-bubble">De hoogteverschil-classificatie is automatisch berekend uit AHN-hoogtekaarten: we meten de gemiddelde steilheid van het terrein op de baan. Plat (&lt;3°), glooiend (3–5°), heuvelachtig (&gt;5°) — gebaseerd op gemeten data, niet op folders of reputatie. Een enkele baan ontbreekt nog (–). Klopt een classificatie volgens jou niet? Laat het weten — correcties zijn welkom!</span></span></span>
       <div class="toggle-group" id="m-hoogte-group" style="flex-wrap:wrap">
         <button class="toggle-btn" data-value="plat">Plat</button>
         <button class="toggle-btn" data-value="glooiend">Glooiend</button>
@@ -1549,6 +1567,14 @@
 
   // Re-render when crossing the mobile/desktop breakpoint so the view switches cleanly.
   window.matchMedia('(max-width: 600px)').addEventListener('change', () => applyFilters());
+
+  // (i) info tooltips: hover shows them on desktop (CSS); tap toggles on mobile,
+  // and a tap anywhere else closes any that are open.
+  document.addEventListener('click', e => {
+    const tip = e.target.closest('.info-tip');
+    document.querySelectorAll('.info-tip.open').forEach(t => { if (t !== tip) t.classList.remove('open'); });
+    if (tip && e.target.closest('.info-icon')) tip.classList.toggle('open');
+  });
 
   // Banen modal — per-device course selection
   const banenOverlay = document.getElementById('banen-overlay');
