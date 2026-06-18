@@ -26,6 +26,7 @@ COURSES = [
     {"slug": "golfclub-gaasterland", "name": "Gaasterland", "is_par3": False, "holes": [9, 18]},
     {"slug": "golfclub-holthuizen", "name": "Holthuizen", "is_par3": False, "holes": [9, 18]},
     {"slug": "golfparc-sandur", "name": "Sandur", "is_par3": False, "holes": [9, 18]},
+    {"slug": "golfpark-exloo", "name": "Exloo", "is_par3": False, "holes": [9, 18]},
 ]
 
 
