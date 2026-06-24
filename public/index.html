@@ -669,7 +669,7 @@
   .ov-num { text-align: center; width: 52px; font-variant-numeric: tabular-nums; }
   .ov-first { text-align: center; width: 58px; font-weight: 600; white-space: nowrap; }
 
-  /* Desktop Overzicht: tables side by side (10 courses each), scroll right */
+  /* Desktop Overzicht: tables side by side (9 courses each), scroll right */
   .ov-columns { display: flex; align-items: flex-start; gap: 18px; padding: 0 12px 12px; }
   table.ov-col { width: 340px; min-width: 340px; flex: 0 0 340px; }
 
@@ -2079,11 +2079,11 @@
       // Phone: one long vertical table.
       container.appendChild(buildTable(rows));
     } else {
-      // Desktop: chunk into columns of 10, laid side by side (scroll right).
+      // Desktop: chunk into columns of 9, laid side by side (scroll right).
       const wrap = document.createElement('div');
       wrap.className = 'ov-columns';
-      for (let i = 0; i < rows.length; i += 10) {
-        const t = buildTable(rows.slice(i, i + 10));
+      for (let i = 0; i < rows.length; i += 9) {
+        const t = buildTable(rows.slice(i, i + 9));
         t.classList.add('ov-col');
         wrap.appendChild(t);
       }
