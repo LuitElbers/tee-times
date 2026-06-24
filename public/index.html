@@ -702,6 +702,8 @@
   <div class="filter-group desktop-filter">
     <label for="from-time">Tijd vanaf:</label>
     <select id="from-time">
+      <option value="07:00">7:00</option>
+      <option value="08:00">8:00</option>
       <option value="09:00">9:00</option>
       <option value="10:00" selected>10:00</option>
       <option value="11:00">11:00</option>
@@ -719,6 +721,8 @@
   <div class="filter-group desktop-filter">
     <label for="to-time">Tijd tot:</label>
     <select id="to-time">
+      <option value="07:00">7:00</option>
+      <option value="08:00">8:00</option>
       <option value="09:00">9:00</option>
       <option value="10:00">10:00</option>
       <option value="11:00">11:00</option>
@@ -788,6 +792,8 @@
       <div class="m-filter-group m-time">
         <label class="m-filter-label" for="m-from-time">Tijd vanaf</label>
         <select id="m-from-time">
+          <option value="07:00">7:00</option>
+          <option value="08:00">8:00</option>
           <option value="09:00">9:00</option>
           <option value="10:00" selected>10:00</option>
           <option value="11:00">11:00</option>
@@ -805,6 +811,8 @@
       <div class="m-filter-group m-time">
         <label class="m-filter-label" for="m-to-time">Tijd tot</label>
         <select id="m-to-time">
+          <option value="07:00">7:00</option>
+          <option value="08:00">8:00</option>
           <option value="09:00">9:00</option>
           <option value="10:00">10:00</option>
           <option value="11:00">11:00</option>
@@ -944,6 +952,7 @@
     "Maasduinen", "Brunssummerheide", "Heidemeer", "Martensplek", "De Semslanden",
     "De Peelse Golf", "Drentsche", "Ameland", "Kapelkeshof", "Zuid-Drenthe",
     "De Herkenbosche", "Eyckenduyn", "Gaasterland", "Holthuizen", "Sandur", "Exloo",
+    "Weesp", "Golfcentrum Dongen", "Golfcentrum Roosendaal", "Bernardus",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -1073,6 +1082,10 @@
     "Holthuizen":          { main: "#6d7424", sub: "#9da63a" },
     "Sandur":              { main: "#4d7424", sub: "#71a63a" },
     "Exloo":               { main: "#3a6a52", sub: "#529371" },
+    "Weesp":               { main: "#2c6e49", sub: "#3f8c61" },
+    "Golfcentrum Dongen":  { main: "#1f6b4a", sub: "#2f8a62" },
+    "Golfcentrum Roosendaal": { main: "#356b4f", sub: "#4a9070" },
+    "Bernardus":           { main: "#14532d", sub: "#1f7a43" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -1204,6 +1217,10 @@
     "Holthuizen":          { lat: 53.14050, lon: 6.44908 },
     "Sandur":              { lat: 52.72863, lon: 6.91386 },
     "Exloo":               { lat: 52.87544, lon: 6.88585 },
+    "Weesp":               { lat: 52.30038, lon: 5.02481 },
+    "Golfcentrum Dongen":  { lat: 51.61450, lon: 4.91863 },
+    "Golfcentrum Roosendaal": { lat: 51.54079, lon: 4.43769 },
+    "Bernardus":           { lat: 51.66711, lon: 5.21556 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -1336,6 +1353,10 @@
     "Holthuizen":          { landschap: ["bos"],        hoogte: "plat" },
     "Sandur":              { landschap: ["polder"],     hoogte: "plat" },
     "Exloo":               { landschap: ["bos"],        hoogte: "plat" },
+    "Weesp":               { landschap: ["polder"],     hoogte: "plat" },
+    "Golfcentrum Dongen":  { landschap: ["bos"],        hoogte: "plat" },
+    "Golfcentrum Roosendaal": { landschap: ["bos"],     hoogte: "glooiend" },
+    "Bernardus":           { landschap: ["heide", "bos"], hoogte: "glooiend" },
   };
 
   function courseTagLabel(courseName) {

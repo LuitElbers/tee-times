@@ -9,6 +9,8 @@ from scrapers.rijkvannunspeet import fetch_tee_times as rvn_fetch
 from scrapers.asparagi import fetch_tee_times as asp_fetch
 from scrapers.teecontrol import fetch_tee_times as tc_fetch, set_min_interval as _tc_set_interval
 from scrapers.nexxchange import fetch_tee_times as nx_fetch
+from scrapers.chronogolf import fetch_tee_times as cg_fetch
+from scrapers.bernardus import fetch_tee_times as bern_fetch
 from cache_backend import fetch_tee_times as cached_fetch
 from models import TeeTime
 
@@ -62,6 +64,8 @@ async def get_tee_times(
         eg_fetch(date, players, holes_int, include_par3, include_championship),
         rvn_fetch(date, players, holes_int, include_par3, include_championship),
         asp_fetch(date, players, holes_int, include_par3, include_championship),
+        cg_fetch(date, players, holes_int, include_par3, include_championship),
+        bern_fetch(date, players, holes_int, include_par3, include_championship),
     ]
     tasks = [_run_backend(s) for s in fast]
     notices: list[str] = []
