@@ -87,7 +87,7 @@
 
   /* Desktop: stack each filter as name-on-top, options-below, columns aligned. */
   @media (min-width: 601px) {
-    #filter-bar { align-items: flex-end; gap: 11px 10px; }
+    #filter-bar { align-items: flex-end; gap: 11px 8px; }
     .filter-group { flex-direction: column; align-items: flex-start; gap: 5px; }
     .filter-group > label {
       font-size: 12px; font-weight: 600; color: #555; white-space: nowrap; text-align: left;
@@ -100,7 +100,10 @@
     /* Options one tick smaller than before (headers keep their size). */
     #filter-bar .toggle-btn { font-size: 12px; padding: 4px 8px; }
     #filter-bar .toggle-group { gap: 3px; }
-    #date-input, #from-time, #to-time, #distance { font-size: 13px; padding: 4px 6px; }
+    #date-input, #from-time, #to-time, #distance { font-size: 13px; padding: 4px 4px; box-sizing: border-box; }
+    #date-input { width: 116px; }
+    #from-time, #to-time { width: 60px; }
+    #distance { width: 92px; }
   }
 
   #status {
@@ -422,6 +425,20 @@
 
   #banen-btn:hover { background: #f0f0f0; }
 
+  /* Desktop view toggle (Overzicht <-> Table); hidden on mobile */
+  #view-toggle-btn {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 5px 12px;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #view-toggle-btn:hover { background: #f0f0f0; }
+
   #loc-overlay, #banen-overlay {
     display: none;
     position: fixed;
@@ -655,6 +672,7 @@
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
     .date-label { display: none; }
+    #view-toggle-btn { display: none; }
     #filters-btn { display: block; }
     #overzicht-btn.visible { display: block; }
     #filter-overlay.open { display: flex; }
@@ -771,6 +789,7 @@
   <button id="filters-btn">Filters</button>
   <button id="overzicht-btn">Overzicht</button>
   <span id="status"></span>
+  <button id="view-toggle-btn">Table</button>
   <button id="banen-btn">Banen</button>
 </div>
 
@@ -1424,6 +1443,10 @@
   let selectedClub = null;  // null = Overzicht; a course name = detail view
   const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
 
+  // Desktop-only: which main view is shown. Default is the Overzicht summary;
+  // the toggle button next to Banen flips to the full Table grid and back.
+  let desktopView = 'overzicht';  // 'overzicht' | 'table'
+
   try {
     const saved = JSON.parse(localStorage.getItem('userCoords'));
     if (saved && typeof saved.lat === 'number' && typeof saved.lon === 'number') userCoords = saved;
@@ -1682,6 +1705,13 @@
     applyFilters();
   });
 
+  document.getElementById('view-toggle-btn').addEventListener('click', () => {
+    desktopView = desktopView === 'overzicht' ? 'table' : 'overzicht';
+    updateViewToggleLabel();
+    applyFilters();
+  });
+  updateViewToggleLabel();
+
   // Re-render when crossing the mobile/desktop breakpoint so the view switches cleanly.
   window.matchMedia('(max-width: 600px)').addEventListener('change', () => applyFilters());
 
@@ -1927,7 +1957,16 @@
     }
 
     overzichtBtn.classList.remove('visible');
-    renderTable(visible, container);
+    if (desktopView === 'overzicht') {
+      renderOverview(visible, container);
+    } else {
+      renderTable(visible, container);
+    }
+  }
+
+  function updateViewToggleLabel() {
+    const btn = document.getElementById('view-toggle-btn');
+    if (btn) btn.textContent = desktopView === 'overzicht' ? 'Table' : 'Overzicht';
   }
 
   function renderOverview(data, container) {
@@ -1972,7 +2011,15 @@
     const tbody = document.createElement('tbody');
     for (const g of rows) {
       const tr = document.createElement('tr');
-      tr.addEventListener('click', () => { selectedClub = g.course; applyFilters(); });
+      tr.addEventListener('click', () => {
+        if (isMobile()) {
+          selectedClub = g.course;
+        } else {
+          desktopView = 'table';
+          updateViewToggleLabel();
+        }
+        applyFilters();
+      });
 
       const clubTd = document.createElement('td');
       const clubWrap = document.createElement('div');
