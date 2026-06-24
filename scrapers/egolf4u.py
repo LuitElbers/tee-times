@@ -106,9 +106,9 @@ COURSES = [
         "host": "schaerweijde.teetime.e-golf4u.nl",
         "name": "Schaerweijde",
         "baans": [
-            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
-            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": False},
-            {"baan": 7, "sub": "2de 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": True},
+            {"baan": 2, "sub": "1ste 9 holes", "holes": 9, "is_par3": True},
+            {"baan": 7, "sub": "2de 9 holes", "holes": 9, "is_par3": True},
         ],
     },
     {
@@ -132,8 +132,8 @@ COURSES = [
         "host": "boisleduc.teetime.e-golf4u.nl",
         "name": "Parc de Pettelaar",
         "baans": [
-            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": False},
-            {"baan": 2, "sub": "9 holes", "holes": 9, "is_par3": False},
+            {"baan": 1, "sub": "18 holes", "holes": 18, "is_par3": True},
+            {"baan": 2, "sub": "9 holes", "holes": 9, "is_par3": True},
         ],
     },
     {
@@ -148,8 +148,8 @@ COURSES = [
         "host": "teetime.golfclubvught.nl",
         "name": "Vught",
         "baans": [
-            {"baan": 23, "sub": "18 holes", "holes": 18, "is_par3": False},
-            {"baan": 18, "sub": "9 holes", "holes": 9, "is_par3": False},
+            {"baan": 23, "sub": "18 holes", "holes": 18, "is_par3": True},
+            {"baan": 18, "sub": "9 holes", "holes": 9, "is_par3": True},
         ],
     },
     {

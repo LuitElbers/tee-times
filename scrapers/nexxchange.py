@@ -15,7 +15,7 @@ COURSES = [
     {"slug": "kavel-2-beemster", "name": "Kavel II Beemster", "is_par3": True, "holes": [9, 18]},
     {"slug": "domburgsche-golfclub", "name": "Domburgsche", "is_par3": False, "holes": [9, 18]},
     {"slug": "openbare-golfclub-dronten", "name": "Openbare Golfclub Dronten", "is_par3": False, "holes": [9, 18]},
-    {"slug": "golfclub-putten", "name": "Putten", "is_par3": False, "holes": [9, 18]},
+    {"slug": "golfclub-putten", "name": "Putten", "is_par3": True, "holes": [9, 18]},
     {"slug": "golfclub-anderstein", "name": "Anderstein", "is_par3": False, "holes": [9, 18]},
     {"slug": "golfclub-flevoland", "name": "Flevoland", "is_par3": False, "holes": [9, 18]},
     {"slug": "golf-club-havelte", "name": "Havelte", "is_par3": False, "holes": [9, 18]},

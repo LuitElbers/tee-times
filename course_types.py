@@ -26,6 +26,17 @@ This is enforced by tests/test_course_types.py:
   Golfcentrum Roosendaal par 33/9, 5 of 9 holes par-3 [borderline]
   Welderen               par-3/4 course
   Shortgolf Utrecht      par-3 / par-3-4 short course
+  Schaerweijde           9 holes par 28/9 (8 par-3 + 1 par-4), played twice for "18"
+  Parc de Pettelaar      par-3/4 9h (short narrow fairways)
+  Vught                  par-3 course (longest hole 140m)
+  Kralingen              par 32/9, executive
+  Harderwold             par 31/9, executive (4 par-4 + 5 par-3)
+  Maasduinen             par 29/9, executive (7 par-3 + 2 par-4)
+  Putten                 par 64/18 (32/9), executive "compact qualifying"
+  BurgGolf Rotterdam     Crimpenerhout par 33/9 (~2074m) [borderline]
+
+Note: a booking system offering "18 holes" is often a 9-hole course played twice — so
+classification is by actual length/par per course, NOT by the hole option shown.
 
 Mixed clubs (a full regulation course AND a separate par-3/short course) are classified
 "championship": they legitimately offer championship golf; their par-3 sub-course is split
@@ -49,13 +60,13 @@ COURSE_TYPES = {
     "Dirkshorn": "championship",
     "Haarlemmermeersche": "championship",
     "Spandersbosch": "championship",
-    "Kralingen": "championship",
+    "Kralingen": "short",
     "Bentwoud": "championship",
     "Zeegersloot": "championship",
     "De Hooge Rotterdamsche": "championship",
     "Hitland": "championship",
     "Zeewolde": "championship",
-    "Harderwold": "championship",
+    "Harderwold": "short",
     "Emmeloord": "championship",
     "De Gulbergen": "championship",
     "Landgoed Nieuwkerk": "championship",
@@ -85,7 +96,7 @@ COURSE_TYPES = {
     "De Breuninkhof": "championship",
     "Land van Thorn": "championship",
     "Sint Nyk": "championship",
-    "BurgGolf Rotterdam": "championship",
+    "BurgGolf Rotterdam": "short",
     "Shortgolf Utrecht": "short",
     "Tespelduyn": "short",
     "Edese": "championship",
@@ -100,12 +111,12 @@ COURSE_TYPES = {
     "Broekpolder": "championship",
     "De Woeste Kop": "championship",
     "Kromme Rijn": "championship",
-    "Schaerweijde": "championship",
+    "Schaerweijde": "short",
     "Wouwse Plantage": "championship",
     "Princenbosch": "championship",
-    "Parc de Pettelaar": "championship",
+    "Parc de Pettelaar": "short",
     "De Swinkelsche": "championship",
-    "Vught": "championship",
+    "Vught": "short",
     "De Dommel": "championship",
     "Overbrug": "championship",
     "Riel": "short",
@@ -117,7 +128,7 @@ COURSE_TYPES = {
     "Kavel II Beemster": "short",
     "Domburgsche": "championship",
     "Openbare Golfclub Dronten": "championship",
-    "Putten": "championship",
+    "Putten": "short",
     "Anderstein": "championship",
     "Flevoland": "championship",
     "Havelte": "championship",
@@ -144,7 +155,7 @@ COURSE_TYPES = {
     "Rosendaelsche": "championship",
     "De Dorpswaard": "championship",
     "De Lage Mors": "championship",
-    "Maasduinen": "championship",
+    "Maasduinen": "short",
     "Brunssummerheide": "championship",
     "Heidemeer": "championship",
     "Martensplek": "championship",

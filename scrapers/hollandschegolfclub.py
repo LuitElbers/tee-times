@@ -25,7 +25,7 @@ LOCATIONS = [
     {"id": 104, "name": "De Breuninkhof"},
     {"id": 158, "name": "Land van Thorn"},
     {"id": 156, "name": "Sint Nyk"},
-    {"id": 152, "name": "BurgGolf Rotterdam"},
+    {"id": 152, "name": "BurgGolf Rotterdam", "short": True},
     {"id": 149, "name": "Shortgolf Utrecht", "short": True},
 ]
 
