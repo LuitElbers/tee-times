@@ -97,6 +97,7 @@ COURSES = [
     {"origin": "https://peelse.teecontrol.com", "course_name": "De Peelse Golf", "booking_url": "https://peelse.teecontrol.com/book"},
     {"origin": "https://drentsche.teecontrol.com", "course_name": "Drentsche", "booking_url": "https://drentsche.teecontrol.com/book"},
     {"origin": "https://golfbaanameland.teecontrol.com", "course_name": "Ameland", "booking_url": "https://golfbaanameland.teecontrol.com/book"},
+    {"origin": "https://bleijenbeek.teecontrol.com", "course_name": "Bleijenbeek", "booking_url": "https://bleijenbeek.teecontrol.com/book"},
 ]
 
 API_BASE = "https://api.teecontrol.com"

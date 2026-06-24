@@ -164,6 +164,8 @@ COURSE_TYPES = {
     "Golfcentrum Dongen": "championship",
     "Golfcentrum Roosendaal": "short",
     "Bernardus": "championship",
+    "Bleijenbeek": "championship",
+    "Lochemse": "championship",
 }
 
 

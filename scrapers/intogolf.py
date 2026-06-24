@@ -5,6 +5,8 @@ import httpx
 from models import TeeTime
 
 _client = httpx.AsyncClient(timeout=15.0)
+# Some clubs (e.g. Lochemse/graafschap) serve an expired/mismatched TLS cert.
+_client_noverify = httpx.AsyncClient(timeout=15.0, verify=False)
 
 AMS = ZoneInfo("Europe/Amsterdam")
 
@@ -46,6 +48,7 @@ CLUBS = [
     {"api_url": "https://martensplek.baan.intogolf.nl/api/igg", "course_name": "Martensplek", "booking_url": "https://martensplek.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://semslanden.baan.intogolf.nl/api/igg", "course_name": "De Semslanden", "booking_url": "https://semslanden.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://deherkenbosche.baan.intogolf.nl/api/igg", "course_name": "De Herkenbosche", "booking_url": "https://deherkenbosche.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://graafschap.baan.intogolf.nl/api/igg", "course_name": "Lochemse", "booking_url": "https://graafschap.golfer.intogolf.nl/#/teetimes", "noverify": True},
 ]
 
 
@@ -67,7 +70,8 @@ def _is_par3_course(name: str) -> bool:
 
 
 async def _fetch_club(club: dict, date: str, players: int, holes: int | None, include_par3: bool, include_championship: bool) -> list[TeeTime]:
-    resp = await _client.get(club["api_url"], params={"date": date})
+    client = _client_noverify if club.get("noverify") else _client
+    resp = await client.get(club["api_url"], params={"date": date})
     resp.raise_for_status()
     payload = resp.json()["payload"]
 

@@ -979,6 +979,7 @@
     "De Peelse Golf", "Drentsche", "Ameland", "Kapelkeshof", "Zuid-Drenthe",
     "De Herkenbosche", "Eyckenduyn", "Gaasterland", "Holthuizen", "Sandur", "Exloo",
     "Weesp", "Golfcentrum Dongen", "Golfcentrum Roosendaal", "Bernardus",
+    "Bleijenbeek", "Lochemse",
   ];
   const COURSE_COLORS = {
     "Hoge Dijk":           { main: "#1a6b3c", sub: "#256e42" },
@@ -1112,6 +1113,8 @@
     "Golfcentrum Dongen":  { main: "#1f6b4a", sub: "#2f8a62" },
     "Golfcentrum Roosendaal": { main: "#356b4f", sub: "#4a9070" },
     "Bernardus":           { main: "#14532d", sub: "#1f7a43" },
+    "Bleijenbeek":         { main: "#4a7c2f", sub: "#6aa044" },
+    "Lochemse":            { main: "#2f6e57", sub: "#429077" },
   };
 
   // Course coordinates (geocoded via OpenStreetMap, verified per club).
@@ -1247,6 +1250,8 @@
     "Golfcentrum Dongen":  { lat: 51.61450, lon: 4.91863 },
     "Golfcentrum Roosendaal": { lat: 51.54079, lon: 4.43769 },
     "Bernardus":           { lat: 51.66711, lon: 5.21556 },
+    "Bleijenbeek":         { lat: 51.63319, lon: 6.04312 },
+    "Lochemse":            { lat: 52.13918, lon: 6.36001 },
   };
 
   // Course landscape + elevation classification (manually verified; elevation from AHN bare-earth LiDAR).
@@ -1383,6 +1388,8 @@
     "Golfcentrum Dongen":  { landschap: ["bos"],        hoogte: "plat" },
     "Golfcentrum Roosendaal": { landschap: ["bos"],     hoogte: "glooiend" },
     "Bernardus":           { landschap: ["heide", "bos"], hoogte: "glooiend" },
+    "Bleijenbeek":         { landschap: ["bos"],          hoogte: "plat" },
+    "Lochemse":            { landschap: ["bos"],          hoogte: "plat" },
   };
 
   function courseTagLabel(courseName) {
