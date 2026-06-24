@@ -16,10 +16,12 @@ _HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Accept":
 # chronogolf.com/club/<slug> (pageProps.club.courses[].uuid). All NL clubs here are
 # 9-hole regulation courses. Hoogland (highland-golf-club-amersfoort) is on chronogolf
 # too but releases no greenfee online (0 teetimes every date), so it's excluded.
+# is_short: Weesp is a pure par-3 9-holer; Roosendaal is an executive 9-holer (par 33,
+# 5 of 9 holes par-3); Dongen's main is a par-36 regulation 9-holer. See course_types.py.
 COURSES = [
-    {"course_uuid": "9d47102f-2829-4174-b02c-bf1d21fd017d", "name": "Weesp", "slug": "golfbaan-weesp"},
-    {"course_uuid": "4e453c71-a9d5-46ba-90f3-c0fcdef6760c", "name": "Golfcentrum Dongen", "slug": "golfcentrum-dongen"},
-    {"course_uuid": "f1f454b0-6547-4bd4-a381-c1e09d244210", "name": "Golfcentrum Roosendaal", "slug": "golfcentrum-roosendaal"},
+    {"course_uuid": "9d47102f-2829-4174-b02c-bf1d21fd017d", "name": "Weesp", "slug": "golfbaan-weesp", "is_short": True},
+    {"course_uuid": "4e453c71-a9d5-46ba-90f3-c0fcdef6760c", "name": "Golfcentrum Dongen", "slug": "golfcentrum-dongen", "is_short": False},
+    {"course_uuid": "f1f454b0-6547-4bd4-a381-c1e09d244210", "name": "Golfcentrum Roosendaal", "slug": "golfcentrum-roosendaal", "is_short": True},
 ]
 
 
@@ -64,7 +66,7 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
                 price_eur=price.get("green_fee"),
                 is_available=True,
                 booking_url=booking_url,
-                is_short=False,
+                is_short=course["is_short"],
             ))
         if len(teetimes) < 24:
             break
@@ -73,10 +75,12 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
 
 
 async def fetch_tee_times(date: str, players: int, holes: int | None, include_par3: bool = False, include_championship: bool = True) -> list[TeeTime]:
-    if not include_championship:
-        return []
+    selected = [
+        c for c in COURSES
+        if (c["is_short"] and include_par3) or (not c["is_short"] and include_championship)
+    ]
     results = await asyncio.gather(
-        *[_fetch_course(c, date, players, holes) for c in COURSES],
+        *[_fetch_course(c, date, players, holes) for c in selected],
         return_exceptions=True,
     )
     return [tt for r in results if isinstance(r, list) for tt in r]

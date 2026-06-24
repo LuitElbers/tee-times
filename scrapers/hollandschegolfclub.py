@@ -26,7 +26,7 @@ LOCATIONS = [
     {"id": 158, "name": "Land van Thorn"},
     {"id": 156, "name": "Sint Nyk"},
     {"id": 152, "name": "BurgGolf Rotterdam"},
-    {"id": 149, "name": "Shortgolf Utrecht"},
+    {"id": 149, "name": "Shortgolf Utrecht", "short": True},
 ]
 
 _nonce_cache: dict = {}
@@ -92,7 +92,8 @@ async def _fetch_location_holes(loc: dict, date: str, players: int, holes: int |
 
     for course in body["data"]["courses"]:
         crl_name = course["name"]
-        is_short = "par 3" in crl_name.lower() or "par3" in crl_name.lower() or "short" in crl_name.lower()
+        # loc["short"] marks whole short courses; also detect per-loop par-3 names.
+        is_short = loc.get("short", False) or "par 3" in crl_name.lower() or "par3" in crl_name.lower() or "short" in crl_name.lower()
         if is_short and not include_par3:
             continue
         if not is_short and not include_championship:
@@ -131,6 +132,7 @@ async def _fetch_location_holes(loc: dict, date: str, players: int, holes: int |
                 price_eur=None,
                 is_available=True,
                 booking_url=BOOKING_URL,
+                is_short=is_short,
             ))
 
     return result

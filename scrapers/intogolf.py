@@ -19,12 +19,12 @@ CLUBS = [
         "course_name": "Zaanse",
         "booking_url": "https://zaanse.golfer.intogolf.nl/#/teetimes",
     },
-    {"api_url": "https://vlietlanden.baan.intogolf.nl/api/igg", "course_name": "De Vlietlanden", "booking_url": "https://vlietlanden.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://vlietlanden.baan.intogolf.nl/api/igg", "course_name": "De Vlietlanden", "booking_url": "https://vlietlanden.golfer.intogolf.nl/#/teetimes", "short": True},
     {"api_url": "https://sluispolder.baan.intogolf.nl/api/igg", "course_name": "Sluispolder", "booking_url": "https://sluispolder.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://ooghduyne.baan.intogolf.nl/api/igg", "course_name": "Ooghduyne", "booking_url": "https://ooghduyne.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://rijswijkse.baan.intogolf.nl/api/igg", "course_name": "Rijswijkse", "booking_url": "https://rijswijkse.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://crayestein.baan.intogolf.nl/api/igg", "course_name": "Crayestein", "booking_url": "https://crayestein.golfer.intogolf.nl/#/teetimes"},
-    {"api_url": "https://duinzicht.baan.intogolf.nl/api/igg", "course_name": "Duinzicht", "booking_url": "https://duinzicht.golfer.intogolf.nl/#/teetimes"},
+    {"api_url": "https://duinzicht.baan.intogolf.nl/api/igg", "course_name": "Duinzicht", "booking_url": "https://duinzicht.golfer.intogolf.nl/#/teetimes", "short": True},
     {"api_url": "https://leeuwenbergh.baan.intogolf.nl/api/igg", "course_name": "Leeuwenbergh", "booking_url": "https://leeuwenbergh.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://cromstrijen.baan.intogolf.nl/api/igg", "course_name": "Cromstrijen", "booking_url": "https://cromstrijen.golfer.intogolf.nl/#/teetimes"},
     {"api_url": "https://goese.baan.intogolf.nl/api/igg", "course_name": "De Goese Golf", "booking_url": "https://goese.golfer.intogolf.nl/#/teetimes"},
@@ -78,7 +78,9 @@ async def _fetch_club(club: dict, date: str, players: int, holes: int | None, in
         crl_name = course["crlName"]
         if "footgolf" in crl_name.lower():
             continue
-        is_short = _is_par3_course(crl_name)
+        # club["short"] marks whole clubs that are short/executive courses (par well
+        # below regulation) where the per-loop name doesn't say "par 3".
+        is_short = club.get("short", False) or _is_par3_course(crl_name)
         if is_short and not include_par3:
             continue
         if not is_short and not include_championship:
@@ -117,6 +119,7 @@ async def _fetch_club(club: dict, date: str, players: int, holes: int | None, in
                     price_eur=_parse_green_fee(raw_price),
                     is_available=True,
                     booking_url=club["booking_url"],
+                    is_short=is_short,
                 )
 
             if holes is None or holes == 9:

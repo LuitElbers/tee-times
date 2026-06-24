@@ -174,8 +174,8 @@ COURSES = [
         "host": "riel.teetime.e-golf4u.nl",
         "name": "Riel",
         "baans": [
-            {"baan": 6, "sub": "18 holes", "holes": 18, "is_par3": False},
-            {"baan": 1, "sub": "9 holes", "holes": 9, "is_par3": False},
+            {"baan": 6, "sub": "18 holes", "holes": 18, "is_par3": True},
+            {"baan": 1, "sub": "9 holes", "holes": 9, "is_par3": True},
         ],
     },
     {
@@ -254,8 +254,8 @@ COURSES = [
         "host": "kapelkeshof.teetime.e-golf4u.nl",
         "name": "Kapelkeshof",
         "baans": [
-            {"baan": 5, "sub": "Kapelkeshofbaan", "holes": 18, "is_par3": False},
-            {"baan": 8, "sub": "Solarisbaan 9 holes", "holes": 9, "is_par3": False},
+            {"baan": 5, "sub": "Kapelkeshofbaan", "holes": 18, "is_par3": True},
+            {"baan": 8, "sub": "Solarisbaan 9 holes", "holes": 9, "is_par3": True},
         ],
     },
     {
@@ -310,6 +310,7 @@ async def _fetch_baan(course: dict, baan: dict, date: str, players: int) -> list
             price_eur=None,
             is_available=True,
             booking_url=f"{url}?baan={baan['baan']}&datum={datum}&holes={baan['holes']}&view=grid",
+            is_short=baan["is_par3"],
         ))
 
     return result

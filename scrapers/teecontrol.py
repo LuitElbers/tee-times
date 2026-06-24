@@ -87,9 +87,9 @@ COURSES = [
     {"origin": "https://gulbergen.teecontrol.com", "course_name": "De Gulbergen", "booking_url": "https://gulbergen.teecontrol.com/book"},
     {"origin": "https://nieuwkerk.teecontrol.com", "course_name": "Landgoed Nieuwkerk", "booking_url": "https://nieuwkerk.teecontrol.com/book"},
     {"origin": "https://heelsum.teecontrol.com", "course_name": "Heelsum", "booking_url": "https://heelsum.teecontrol.com/book"},
-    {"origin": "https://welderen.teecontrol.com", "course_name": "Welderen", "booking_url": "https://welderen.teecontrol.com/book"},
+    {"origin": "https://welderen.teecontrol.com", "course_name": "Welderen", "booking_url": "https://welderen.teecontrol.com/book", "short": True},
     {"origin": "https://prise-deau.teecontrol.com", "course_name": "Prise d'Eau", "booking_url": "https://prise-deau.teecontrol.com/book"},
-    {"origin": "https://golfbaantespelduyn.teecontrol.com", "course_name": "Tespelduyn", "booking_url": "https://golfbaantespelduyn.teecontrol.com/book"},
+    {"origin": "https://golfbaantespelduyn.teecontrol.com", "course_name": "Tespelduyn", "booking_url": "https://golfbaantespelduyn.teecontrol.com/book", "short": True},
     {"origin": "https://egcp.teecontrol.com", "course_name": "Edese", "booking_url": "https://egcp.teecontrol.com/book"},
     {"origin": "https://gcdecompagnie.teecontrol.com", "course_name": "De Compagnie", "booking_url": "https://gcdecompagnie.teecontrol.com/book"},
     {"origin": "https://linksvalley.teecontrol.com", "course_name": "The Links Valley", "booking_url": "https://linksvalley.teecontrol.com/book"},
@@ -158,7 +158,9 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
         if "footgolf" in s.get("name", "").lower():
             continue
         raw_name = _strip_season_prefix(s.get("name", ""))
-        is_short = bool(s.get("is_par_three") or raw_name in SHORT_COURSES)
+        # course["short"] marks whole courses that are short/executive (par below
+        # regulation) where the API's per-set flag/name doesn't mark them short.
+        is_short = bool(course.get("short") or s.get("is_par_three") or raw_name in SHORT_COURSES)
         if is_short and not include_par3:
             continue
         if not is_short and not include_championship:

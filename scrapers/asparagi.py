@@ -18,9 +18,9 @@ AMS = ZoneInfo("Europe/Amsterdam")
 PORTAL = "https://www.ikgagolfen.nl/asparagi/ikgagolfen/site2/teetimes/teetimes.asp"
 
 COURSES = [
-    {"crs": 908, "name": "Ockenburgh", "is_par3": False},
+    {"crs": 908, "name": "Ockenburgh", "is_par3": True},
     {"crs": 71, "name": "Capelle", "is_par3": False},
-    {"crs": 952, "name": "Concordia", "is_par3": False},
+    {"crs": 952, "name": "Concordia", "is_par3": True},
     {"crs": 58, "name": "De Turfvaert", "is_par3": False},
     {"crs": 915, "name": "Hoenshuis", "is_par3": False},
     {"crs": 958, "name": "Twentse Golfpark", "is_par3": False},
@@ -83,6 +83,7 @@ async def _fetch_course(course: dict, date: str, players: int, holes: int | None
             price_eur=None,
             is_available=True,
             booking_url=booking_url,
+            is_short=course["is_par3"],
         ))
     return result
 
