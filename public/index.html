@@ -669,6 +669,10 @@
   .ov-num { text-align: center; width: 52px; font-variant-numeric: tabular-nums; }
   .ov-first { text-align: center; width: 58px; font-weight: 600; white-space: nowrap; }
 
+  /* Desktop Overzicht: tables side by side (10 courses each), scroll right */
+  .ov-columns { display: flex; align-items: flex-start; gap: 18px; padding: 0 12px 12px; }
+  table.ov-col { width: 340px; min-width: 340px; flex: 0 0 340px; }
+
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
     .date-label { display: none; }
@@ -1444,8 +1448,9 @@
   const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
 
   // Desktop-only: which main view is shown. Default is the Overzicht summary;
-  // the toggle button next to Banen flips to the full Table grid and back.
-  let desktopView = 'overzicht';  // 'overzicht' | 'table'
+  // the toggle button next to Banen flips to the full Grid and back. Clicking a
+  // club in the Overzicht drills into the Grid for that one club (selectedClub).
+  let desktopView = 'overzicht';  // 'overzicht' | 'grid'
 
   try {
     const saved = JSON.parse(localStorage.getItem('userCoords'));
@@ -1706,7 +1711,8 @@
   });
 
   document.getElementById('view-toggle-btn').addEventListener('click', () => {
-    desktopView = desktopView === 'overzicht' ? 'table' : 'overzicht';
+    desktopView = desktopView === 'overzicht' ? 'grid' : 'overzicht';
+    selectedClub = null;  // toggle always shows the full view (all courses / overzicht)
     updateViewToggleLabel();
     applyFilters();
   });
@@ -1957,16 +1963,22 @@
     }
 
     overzichtBtn.classList.remove('visible');
-    if (desktopView === 'overzicht') {
-      renderOverview(visible, container);
+    if (desktopView === 'grid') {
+      if (selectedClub) {
+        const clubRows = visible.filter(r => r.course === selectedClub);
+        if (clubRows.length === 0) { selectedClub = null; renderTable(visible, container); }
+        else renderTable(clubRows, container);
+      } else {
+        renderTable(visible, container);
+      }
     } else {
-      renderTable(visible, container);
+      renderOverview(visible, container);
     }
   }
 
   function updateViewToggleLabel() {
     const btn = document.getElementById('view-toggle-btn');
-    if (btn) btn.textContent = desktopView === 'overzicht' ? 'Table' : 'Overzicht';
+    if (btn) btn.textContent = desktopView === 'overzicht' ? 'Grid' : 'Overzicht';
   }
 
   function renderOverview(data, container) {
@@ -1994,77 +2006,93 @@
 
     const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
-    const table = document.createElement('table');
-    table.className = 'ov-table';
+    function buildTable(subset) {
+      const table = document.createElement('table');
+      table.className = 'ov-table';
 
-    const thead = document.createElement('thead');
-    const htr = document.createElement('tr');
-    [['Club', 'ov-th-club'], ['Banen', ''], ['Tee times', ''], ['Eerste', '']].forEach(([label, cls]) => {
-      const th = document.createElement('th');
-      th.textContent = label;
-      if (cls) th.className = cls;
-      htr.appendChild(th);
-    });
-    thead.appendChild(htr);
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    for (const g of rows) {
-      const tr = document.createElement('tr');
-      tr.addEventListener('click', () => {
-        if (isMobile()) {
-          selectedClub = g.course;
-        } else {
-          desktopView = 'table';
-          updateViewToggleLabel();
-        }
-        applyFilters();
+      const thead = document.createElement('thead');
+      const htr = document.createElement('tr');
+      [['Club', 'ov-th-club'], ['Banen', ''], ['Tee times', ''], ['Eerste', '']].forEach(([label, cls]) => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        if (cls) th.className = cls;
+        htr.appendChild(th);
       });
+      thead.appendChild(htr);
+      table.appendChild(thead);
 
-      const clubTd = document.createElement('td');
-      const clubWrap = document.createElement('div');
-      clubWrap.className = 'ov-club';
-      const colors = COURSE_COLORS[g.course] || { main: '#444' };
-      clubWrap.style.borderLeftColor = colors.main;
+      const tbody = document.createElement('tbody');
+      for (const g of subset) {
+        const tr = document.createElement('tr');
+        tr.addEventListener('click', () => {
+          selectedClub = g.course;
+          if (!isMobile()) { desktopView = 'grid'; updateViewToggleLabel(); }
+          applyFilters();
+        });
 
-      const nameDiv = document.createElement('div');
-      nameDiv.className = 'ov-club-name';
-      nameDiv.textContent = g.course;
-      clubWrap.appendChild(nameDiv);
+        const clubTd = document.createElement('td');
+        const clubWrap = document.createElement('div');
+        clubWrap.className = 'ov-club';
+        const colors = COURSE_COLORS[g.course] || { main: '#444' };
+        clubWrap.style.borderLeftColor = colors.main;
 
-      const parts = [];
-      const km = courseKm(g.course);
-      if (km !== null) parts.push(Math.round(km) + ' km');
-      const t = COURSE_TAGS[g.course];
-      if (t) { t.landschap.forEach(l => parts.push(cap(l))); if (t.hoogte) parts.push(cap(t.hoogte)); }
-      if (parts.length) {
-        const metaDiv = document.createElement('div');
-        metaDiv.className = 'ov-club-meta';
-        metaDiv.textContent = parts.join(' · ');
-        clubWrap.appendChild(metaDiv);
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'ov-club-name';
+        nameDiv.textContent = g.course;
+        clubWrap.appendChild(nameDiv);
+
+        const parts = [];
+        const km = courseKm(g.course);
+        if (km !== null) parts.push(Math.round(km) + ' km');
+        const t = COURSE_TAGS[g.course];
+        if (t) { t.landschap.forEach(l => parts.push(cap(l))); if (t.hoogte) parts.push(cap(t.hoogte)); }
+        if (parts.length) {
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'ov-club-meta';
+          metaDiv.textContent = parts.join(' · ');
+          clubWrap.appendChild(metaDiv);
+        }
+        clubTd.appendChild(clubWrap);
+
+        const banenTd = document.createElement('td');
+        banenTd.className = 'ov-num';
+        banenTd.textContent = g.configs.size;
+
+        const ttTd = document.createElement('td');
+        ttTd.className = 'ov-num';
+        ttTd.textContent = g.count;
+
+        const firstTd = document.createElement('td');
+        firstTd.className = 'ov-first';
+        firstTd.textContent = g.first;
+
+        tr.append(clubTd, banenTd, ttTd, firstTd);
+        tbody.appendChild(tr);
       }
-      clubTd.appendChild(clubWrap);
-
-      const banenTd = document.createElement('td');
-      banenTd.className = 'ov-num';
-      banenTd.textContent = g.configs.size;
-
-      const ttTd = document.createElement('td');
-      ttTd.className = 'ov-num';
-      ttTd.textContent = g.count;
-
-      const firstTd = document.createElement('td');
-      firstTd.className = 'ov-first';
-      firstTd.textContent = g.first;
-
-      tr.append(clubTd, banenTd, ttTd, firstTd);
-      tbody.appendChild(tr);
+      table.appendChild(tbody);
+      return table;
     }
-    table.appendChild(tbody);
 
-    const oldTable = container.querySelector('table');
-    if (oldTable) oldTable.remove();
-    container.appendChild(table);
+    clearRender(container);
+
+    if (isMobile()) {
+      // Phone: one long vertical table.
+      container.appendChild(buildTable(rows));
+    } else {
+      // Desktop: chunk into columns of 10, laid side by side (scroll right).
+      const wrap = document.createElement('div');
+      wrap.className = 'ov-columns';
+      for (let i = 0; i < rows.length; i += 10) {
+        const t = buildTable(rows.slice(i, i + 10));
+        t.classList.add('ov-col');
+        wrap.appendChild(t);
+      }
+      container.appendChild(wrap);
+    }
+  }
+
+  function clearRender(container) {
+    container.querySelectorAll('table, .ov-columns').forEach(e => e.remove());
   }
 
   function renderTable(data, container) {
@@ -2218,8 +2246,7 @@
     }
     table.appendChild(tbody);
 
-    const oldTable = container.querySelector('table');
-    if (oldTable) oldTable.remove();
+    clearRender(container);
     container.appendChild(table);
     requestAnimationFrame(syncHeaderOffset);
   }
