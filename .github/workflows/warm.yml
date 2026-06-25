@@ -3,9 +3,10 @@ name: warm
 on:
   schedule:
     # teecontrol/nexxchange rate-limit PER IP, so the work is sharded across 3
-    # runners (3 IPs) -> each shard ~8-10 min instead of one ~22-min run. 30-min
-    # interval leaves comfortable margin. monitor.yml alerts if this stops.
-    - cron: "*/30 * * * *"
+    # runners (3 IPs) -> each shard ~8-10 min instead of one ~22-min run.
+    # Offset minutes (:08/:38), NOT :00/:30: GitHub most often drops scheduled
+    # events at the top of the hour, so on-the-hour crons silently don't fire.
+    - cron: "8,38 * * * *"
   workflow_dispatch:
 
 permissions:
