@@ -2,11 +2,9 @@ name: warm
 
 on:
   schedule:
-    # Warm runs ~22 min today (teecontrol's per-IP rate limit is the long pole).
-    # 30-min interval leaves ~8 min margin; cancel-in-progress is false so an
-    # occasional long run just queues the next rather than overlapping. If the
-    # run time creeps up, shard the warm across runners (see warm.py) before
-    # tightening this further.
+    # teecontrol/nexxchange rate-limit PER IP, so the work is sharded across 3
+    # runners (3 IPs) -> each shard ~8-10 min instead of one ~22-min run. 30-min
+    # interval leaves comfortable margin. monitor.yml alerts if this stops.
     - cron: "*/30 * * * *"
   workflow_dispatch:
 
@@ -20,7 +18,11 @@ concurrency:
 jobs:
   warm:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false          # one shard failing must not cancel the others
+      matrix:
+        shard: [0, 1, 2]
     steps:
       - uses: actions/checkout@v4
 
@@ -30,20 +32,50 @@ jobs:
           cache: pip
 
       - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Only shard 0 fetches Waterland (golfmanager), which needs a browser.
+      - name: Install Playwright + Chromium (shard 0 only)
+        if: matrix.shard == 0
         run: |
-          pip install -r requirements.txt playwright
+          pip install playwright
+          python -m playwright install --with-deps chromium
 
-      - name: Cache Playwright browser
-        uses: actions/cache@v4
+      - name: Fetch shard
+        run: python warm.py --shard ${{ matrix.shard }} --of 3
+
+      - uses: actions/upload-artifact@v4
         with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ runner.os }}
+          name: warm-shard-${{ matrix.shard }}
+          path: warm_shard_${{ matrix.shard }}.json
+          retention-days: 1
+          if-no-files-found: error
 
-      - name: Install Chromium
-        run: python -m playwright install --with-deps chromium
+  merge:
+    needs: warm
+    if: always()              # still merge (carry-forward) even if a shard failed
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Build warm.json
-        run: python warm.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download shard results
+        uses: actions/download-artifact@v4
+        with:
+          path: .
+          pattern: warm-shard-*
+          merge-multiple: true   # drop all warm_shard_*.json into the workspace root
+
+      - name: Merge shards (carry-forward missing courses from previous warm.json)
+        run: python warm.py --merge --of 3
 
       - name: Publish to data branch
         run: |
