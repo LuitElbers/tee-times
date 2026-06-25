@@ -57,13 +57,17 @@ def assess(warm: dict | None, now: datetime) -> tuple[bool, str]:
     if gen_age > OVERALL_STALE_H:
         lines.append(f"warm.json last republished {gen_age:.1f}h ago (expected every ~30 min).")
 
+    # Per-course freshness only applies when the map exists. If it's absent (a
+    # legacy/transition warm.json) we rely on generated_at alone rather than
+    # falsely reporting every course as "never fetched".
     fresh_at = warm.get("course_fresh_at", {})
     stale = []
-    for course in sorted(expected_courses()):
-        ts = fresh_at.get(course)
-        age = float("inf") if ts is None else _age_h(ts, now)
-        if age > COURSE_STALE_H:
-            stale.append((course, "never" if ts is None else f"{age:.1f}h"))
+    if fresh_at:
+        for course in sorted(expected_courses()):
+            ts = fresh_at.get(course)
+            age = float("inf") if ts is None else _age_h(ts, now)
+            if age > COURSE_STALE_H:
+                stale.append((course, "never" if ts is None else f"{age:.1f}h"))
     if stale:
         shown = ", ".join(f"{c} ({a})" for c, a in stale[:12])
         more = f" +{len(stale) - 12} more" if len(stale) > 12 else ""
