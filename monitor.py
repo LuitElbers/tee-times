@@ -27,6 +27,8 @@ STATE_OUT = Path(__file__).parent / "monitor_state.json"
 
 OVERALL_STALE_H = 2     # warm.json should republish every ~30 min; >2h = warmer down
 COURSE_STALE_H = 3      # a course not freshly fetched in >3h = its shard persistently failing
+STALE_COURSE_MIN = 4    # only alert on a "bunch" (e.g. a whole shard ~15); 1-2 flaky
+                        # courses are covered by carry-forward and just noted, not alerted
 REALERT_H = 6           # while still down, re-alert at most this often
 
 
@@ -68,14 +70,21 @@ def assess(warm: dict | None, now: datetime) -> tuple[bool, str]:
             age = float("inf") if ts is None else _age_h(ts, now)
             if age > COURSE_STALE_H:
                 stale.append((course, "never" if ts is None else f"{age:.1f}h"))
-    if stale:
+    # A bunch of stale courses (a shard persistently failing) is an alert; 1-3
+    # flaky ones are covered by carry-forward, so note them but don't alarm.
+    if len(stale) >= STALE_COURSE_MIN:
         shown = ", ".join(f"{c} ({a})" for c, a in stale[:12])
         more = f" +{len(stale) - 12} more" if len(stale) > 12 else ""
-        lines.append(f"{len(stale)} course(s) not updated in >{COURSE_STALE_H}h: {shown}{more}.")
+        lines.append(f"{len(stale)} courses not updated in >{COURSE_STALE_H}h: {shown}{more}.")
+
+    note = ""
+    if 0 < len(stale) < STALE_COURSE_MIN:
+        note = "  (note, not alerting: " + ", ".join(c for c, _ in stale) + " stale but carried forward.)"
 
     if lines:
         return False, "\n".join(lines)
-    return True, f"healthy - warm.json {gen_age:.1f}h old, all {len(expected_courses())} warmed courses fresh."
+    return True, (f"healthy - warm.json {gen_age:.1f}h old, "
+                  f"{len(expected_courses()) - len(stale)}/{len(expected_courses())} courses fresh.{note}")
 
 
 def _telegram(text: str) -> None:
