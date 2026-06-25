@@ -429,8 +429,17 @@
 
   #banen-btn:hover { background: #eaf3ec; }
 
-  /* Desktop view switcher (Overzicht | Grid) — a segmented control so it reads
-     as a view picker, not a filter. Hidden on mobile. */
+  /* Desktop view switcher (Overzicht | Grid) — its own row directly above the
+     content, left-aligned, so it reads as the tab bar for the data below it.
+     A segmented control, not a filter. Hidden on mobile. */
+  #view-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 9px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e3e3e3;
+  }
   #view-switch {
     display: inline-flex;
     align-items: center;
@@ -703,7 +712,7 @@
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
     .date-label { display: none; }
-    #view-switch { display: none; }
+    #view-bar { display: none; }
     #filters-btn { display: block; }
     #overzicht-btn.visible { display: block; }
     #filter-overlay.open { display: flex; }
@@ -820,15 +829,18 @@
   <button id="filters-btn">Filters</button>
   <button id="overzicht-btn">&#8249; Overzicht</button>
   <span id="status"></span>
-  <div id="view-switch" role="group" aria-label="Weergave kiezen">
-    <button class="view-seg active" data-view="overzicht">Overzicht</button>
-    <button class="view-seg" data-view="grid">Grid</button>
-  </div>
   <button id="banen-btn">&#9971; Banen</button>
 </div>
 
 <div id="loading-row">Verversen…</div>
 <div id="notice-row"></div>
+
+<div id="view-bar">
+  <div id="view-switch" role="group" aria-label="Weergave kiezen">
+    <button class="view-seg active" data-view="overzicht">Overzicht</button>
+    <button class="view-seg" data-view="grid">Grid</button>
+  </div>
+</div>
 
 <div id="filter-overlay">
   <div id="overlay-header">
