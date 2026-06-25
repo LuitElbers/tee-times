@@ -120,46 +120,29 @@ async def _warm_waterland(status: dict) -> dict[str, list]:
         status["golfmanager"] = per_course
         return by_day
 
-    # availability.json is gated by a per-request token (rid) the SPA's JS signs
-    # after establishing a websocket session, so we must let the SPA make the call.
-    # Two gotchas, both handled here:
-    #   1) golfmanager refuses the session for a HeadlessChrome UA (-> 401 "session
-    #      expired" text body), so we use a realistic Chrome UA + viewport.
-    #   2) Playwright does not reliably retain XHR response bodies, so reading
-    #      Response.json() returned empty/garbled. We intercept the request and read
-    #      the body via route.fetch() (which fully buffers it) before fulfilling.
-    captured: dict[str, dict] = {}
-
-    _diag = {"n": 0}
-
-    async def _on_route(route):
-        req = route.request
-        if "availability.json" not in req.url:
-            await route.continue_()
-            return
-        try:
-            api_resp = await route.fetch()      # the SPA's own request (rid intact)
-            text = await api_resp.text()
-            if _diag["n"] < 3:
-                _diag["n"] += 1
-                ce = api_resp.headers.get("content-encoding")
-                ct = api_resp.headers.get("content-type")
-                print(f"DIAG waterland route.fetch status={api_resp.status} ct={ct} "
-                      f"enc={ce} len={len(text)} head={text[:80]!r}", file=sys.stderr)
-            await route.fulfill(response=api_resp)
-            if api_resp.status == 200:
-                import json as _json
-                obj = _json.loads(text)
-                if isinstance(obj, dict) and "items" in obj:
-                    captured[req.url] = obj
-        except Exception as e:
-            if _diag["n"] < 3:
-                _diag["n"] += 1
-                print(f"DIAG waterland route handler error: {type(e).__name__}: {e}", file=sys.stderr)
-            try:
-                await route.continue_()
-            except Exception:
-                pass
+    # golfmanager ENCRYPTS the availability.json body (200, text/plain, ~86KB of
+    # base64 that the SPA's JS decrypts client-side), so no HTTP-level capture yields
+    # JSON. We grab the data right after the SPA decrypts it, by hooking JSON.parse
+    # via add_init_script (runs before page scripts, fresh on every navigation) and
+    # stashing any decrypted availability array on window.__cap.
+    # (Also: it refuses the session for a HeadlessChrome UA, hence the realistic UA.)
+    HOOK = """
+    (() => {
+      window.__cap = [];
+      const _p = JSON.parse;
+      JSON.parse = function () {
+        const r = _p.apply(this, arguments);
+        try {
+          const arr = Array.isArray(r) ? r : (r && r.items);
+          if (Array.isArray(arr) && arr.length && arr[0] &&
+              ('start' in arr[0]) && ('slots' in arr[0])) {
+            window.__cap.push(arr);
+          }
+        } catch (e) {}
+        return r;
+      };
+    })();
+    """
 
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -168,36 +151,39 @@ async def _warm_waterland(status: dict) -> dict[str, list]:
                         "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
             viewport={"width": 1280, "height": 900},
         )
+        await context.add_init_script(HOOK)
         page = await context.new_page()
-        await page.route("**/availability.json*", _on_route)
+        diagged = False
 
         for course in gm.COURSES:
             ok, failed, errors = 0, 0, []
             for d in _dates():
                 url = f"{course['base_url']}/consumer/book?area={course['area']}&date={d}T00:00"
-                data = None
+                items = None
                 for attempt in range(2):
-                    captured.clear()
                     try:
                         await page.goto(url, wait_until="domcontentloaded", timeout=25000)
                     except Exception:
                         pass
-                    # The SPA holds a live connection (networkidle never settles), so
-                    # poll the route-captured data instead of waiting on the page.
-                    for _ in range(20):
-                        data = next((v for k, v in captured.items() if d in k), None)
-                        if data is not None:
+                    for _ in range(24):
+                        caps = await page.evaluate("() => window.__cap || []")
+                        if caps:
+                            items = max(caps, key=len)   # the availability array
                             break
                         await page.wait_for_timeout(500)
-                    if data is not None:
+                    if items:
                         break
-                if data is None:
+                if not items:
                     failed += 1
-                    errors.append(f"{d}: no parseable 200 availability.json captured")
+                    errors.append(f"{d}: no decrypted availability captured")
                     print(f"WARNING golfmanager {course['course_name']} {d}: "
-                          f"no parseable availability.json captured", file=sys.stderr)
+                          f"no decrypted availability captured", file=sys.stderr)
                     continue
-                tts = gm.items_to_teetimes(course, data.get("items", []))
+                if not diagged:
+                    diagged = True
+                    print(f"DIAG waterland captured {len(items)} items; "
+                          f"keys={list(items[0].keys())}; sample={items[0]}", file=sys.stderr)
+                tts = gm.items_to_teetimes(course, items)
                 by_day[d].extend(t.model_dump(mode="json") for t in tts)
                 ok += 1
             per_course[course["course_name"]] = {"ok": failed == 0, "dates_ok": ok, "dates_failed": failed, "errors": errors}
