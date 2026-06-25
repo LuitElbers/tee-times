@@ -130,6 +130,8 @@ async def _warm_waterland(status: dict) -> dict[str, list]:
     #      the body via route.fetch() (which fully buffers it) before fulfilling.
     captured: dict[str, dict] = {}
 
+    _diag = {"n": 0}
+
     async def _on_route(route):
         req = route.request
         if "availability.json" not in req.url:
@@ -138,13 +140,22 @@ async def _warm_waterland(status: dict) -> dict[str, list]:
         try:
             api_resp = await route.fetch()      # the SPA's own request (rid intact)
             text = await api_resp.text()
+            if _diag["n"] < 3:
+                _diag["n"] += 1
+                ce = api_resp.headers.get("content-encoding")
+                ct = api_resp.headers.get("content-type")
+                print(f"DIAG waterland route.fetch status={api_resp.status} ct={ct} "
+                      f"enc={ce} len={len(text)} head={text[:80]!r}", file=sys.stderr)
             await route.fulfill(response=api_resp)
             if api_resp.status == 200:
                 import json as _json
                 obj = _json.loads(text)
                 if isinstance(obj, dict) and "items" in obj:
                     captured[req.url] = obj
-        except Exception:
+        except Exception as e:
+            if _diag["n"] < 3:
+                _diag["n"] += 1
+                print(f"DIAG waterland route handler error: {type(e).__name__}: {e}", file=sys.stderr)
             try:
                 await route.continue_()
             except Exception:
