@@ -2,10 +2,12 @@ name: warm
 
 on:
   schedule:
-    # teecontrol's rate limit forces a gentle warm that grows with the course
-    # count; it now runs ~20-25 min, so keep the interval safely above the run
-    # time (cancel-in-progress is false) and the job timeout above that again.
-    - cron: "*/45 * * * *"
+    # Warm runs ~22 min today (teecontrol's per-IP rate limit is the long pole).
+    # 30-min interval leaves ~8 min margin; cancel-in-progress is false so an
+    # occasional long run just queues the next rather than overlapping. If the
+    # run time creeps up, shard the warm across runners (see warm.py) before
+    # tightening this further.
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 permissions:
