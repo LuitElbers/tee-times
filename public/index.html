@@ -417,30 +417,48 @@
   #banen-btn {
     font-family: inherit;
     font-size: 14px;
-    padding: 5px 12px;
-    border: 1px solid #999;
-    border-radius: 4px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border: 1px solid #2d7a3a;
+    border-radius: 8px;
     background: #fff;
-    color: #111;
+    color: #2d7a3a;
     cursor: pointer;
     white-space: nowrap;
   }
 
-  #banen-btn:hover { background: #f0f0f0; }
+  #banen-btn:hover { background: #eaf3ec; }
 
-  /* Desktop view toggle (Overzicht <-> Table); hidden on mobile */
-  #view-toggle-btn {
+  /* Desktop view switcher (Overzicht | Grid) — a segmented control so it reads
+     as a view picker, not a filter. Hidden on mobile. */
+  #view-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: #e7ece7;
+    border: 1px solid #c6d0c6;
+    border-radius: 9px;
+    padding: 3px;
+  }
+  .view-seg {
     font-family: inherit;
-    font-size: 14px;
-    padding: 5px 12px;
-    border: 1px solid #999;
-    border-radius: 4px;
-    background: #fff;
-    color: #111;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 16px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #2d6b39;
     cursor: pointer;
+    line-height: 1.4;
     white-space: nowrap;
   }
-  #view-toggle-btn:hover { background: #f0f0f0; }
+  .view-seg:hover:not(.active) { background: rgba(45,122,58,0.10); }
+  .view-seg.active {
+    background: #2d7a3a;
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  }
 
   #loc-overlay, #banen-overlay {
     display: none;
@@ -625,17 +643,17 @@
     vertical-align: middle;
   }
 
-  /* Mobile Overzicht button (hidden on desktop) */
+  /* Mobile "back to Overzicht" button (hidden on desktop) */
   #overzicht-btn {
     display: none;
     font-family: inherit;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     padding: 5px 14px;
-    border: 1px solid #999;
-    border-radius: 4px;
-    background: #fff;
-    color: #111;
+    border: 1px solid #2d7a3a;
+    border-radius: 8px;
+    background: #2d7a3a;
+    color: #fff;
     cursor: pointer;
     white-space: nowrap;
   }
@@ -685,7 +703,7 @@
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
     .date-label { display: none; }
-    #view-toggle-btn { display: none; }
+    #view-switch { display: none; }
     #filters-btn { display: block; }
     #overzicht-btn.visible { display: block; }
     #filter-overlay.open { display: flex; }
@@ -800,10 +818,13 @@
     </div>
   </div>
   <button id="filters-btn">Filters</button>
-  <button id="overzicht-btn">Overzicht</button>
+  <button id="overzicht-btn">&#8249; Overzicht</button>
   <span id="status"></span>
-  <button id="view-toggle-btn">Table</button>
-  <button id="banen-btn">Banen</button>
+  <div id="view-switch" role="group" aria-label="Weergave kiezen">
+    <button class="view-seg active" data-view="overzicht">Overzicht</button>
+    <button class="view-seg" data-view="grid">Grid</button>
+  </div>
+  <button id="banen-btn">&#9971; Banen</button>
 </div>
 
 <div id="loading-row">Verversen…</div>
@@ -1735,13 +1756,15 @@
     applyFilters();
   });
 
-  document.getElementById('view-toggle-btn').addEventListener('click', () => {
-    desktopView = desktopView === 'overzicht' ? 'grid' : 'overzicht';
-    selectedClub = null;  // toggle always shows the full view (all courses / overzicht)
-    updateViewToggleLabel();
-    applyFilters();
+  document.querySelectorAll('#view-switch .view-seg').forEach(seg => {
+    seg.addEventListener('click', () => {
+      desktopView = seg.dataset.view;
+      selectedClub = null;  // switching view always shows the full view (all courses / overzicht)
+      updateViewSwitch();
+      applyFilters();
+    });
   });
-  updateViewToggleLabel();
+  updateViewSwitch();
 
   // Re-render when crossing the mobile/desktop breakpoint so the view switches cleanly.
   window.matchMedia('(max-width: 600px)').addEventListener('change', () => applyFilters());
@@ -2029,9 +2052,10 @@
     }
   }
 
-  function updateViewToggleLabel() {
-    const btn = document.getElementById('view-toggle-btn');
-    if (btn) btn.textContent = desktopView === 'overzicht' ? 'Grid' : 'Overzicht';
+  function updateViewSwitch() {
+    document.querySelectorAll('#view-switch .view-seg').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === desktopView);
+    });
   }
 
   function renderOverview(data, container, placeholders = []) {
@@ -2094,7 +2118,7 @@
         } else {
           tr.addEventListener('click', () => {
             selectedClub = g.course;
-            if (!isMobile()) { desktopView = 'grid'; updateViewToggleLabel(); }
+            if (!isMobile()) { desktopView = 'grid'; updateViewSwitch(); }
             applyFilters();
           });
         }
