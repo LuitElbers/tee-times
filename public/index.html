@@ -660,7 +660,7 @@
 
   .ov-table th.ov-th-club { text-align: left; padding-left: 10px; }
 
-  .ov-table td { padding: 7px 4px; border-bottom: 1px solid #eee; vertical-align: middle; height: 46px; box-sizing: border-box; }
+  .ov-table td { padding: 7px 4px; border-bottom: 1px solid #eee; vertical-align: middle; }
 
   .ov-table tbody tr { cursor: pointer; background: #fff; }
   .ov-table tbody tr:nth-child(even) { background: #eaf5ea; }
@@ -676,7 +676,11 @@
 
   /* Desktop Overzicht: tables side by side (9 courses each), scroll right */
   .ov-columns { display: flex; align-items: flex-start; gap: 16px; padding: 0 12px 12px; }
-  table.ov-col { width: 360px; min-width: 360px; flex: 0 0 360px; }
+  table.ov-col { width: 400px; min-width: 400px; flex: 0 0 400px; }
+  /* Desktop columns: uniform row height + single-line club name/meta so rows line up across tables */
+  .ov-col td { height: 50px; }
+  .ov-col .ov-club-name,
+  .ov-col .ov-club-meta { overflow-wrap: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   @media (max-width: 600px) {
     .desktop-filter { display: none; }
