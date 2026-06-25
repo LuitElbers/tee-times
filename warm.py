@@ -120,12 +120,36 @@ async def _warm_waterland(status: dict) -> dict[str, list]:
         status["golfmanager"] = per_course
         return by_day
 
-    # The availability.json endpoint is gated by a per-request token (rid) the SPA's
-    # JS signs after a websocket session is established. So we must let the SPA make
-    # the call and capture its response -- but only the 200 one: a cold page often
-    # fires an early availability.json that 401s ("session expired", a 54-char text
-    # body that used to blow up json() with "Expecting value: char 0") before the
-    # session is ready. Match status==200, with a realistic context + retry.
+    # availability.json is gated by a per-request token (rid) the SPA's JS signs
+    # after establishing a websocket session, so we must let the SPA make the call.
+    # Two gotchas, both handled here:
+    #   1) golfmanager refuses the session for a HeadlessChrome UA (-> 401 "session
+    #      expired" text body), so we use a realistic Chrome UA + viewport.
+    #   2) Playwright does not reliably retain XHR response bodies, so reading
+    #      Response.json() returned empty/garbled. We intercept the request and read
+    #      the body via route.fetch() (which fully buffers it) before fulfilling.
+    captured: dict[str, dict] = {}
+
+    async def _on_route(route):
+        req = route.request
+        if "availability.json" not in req.url:
+            await route.continue_()
+            return
+        try:
+            api_resp = await route.fetch()      # the SPA's own request (rid intact)
+            text = await api_resp.text()
+            await route.fulfill(response=api_resp)
+            if api_resp.status == 200:
+                import json as _json
+                obj = _json.loads(text)
+                if isinstance(obj, dict) and "items" in obj:
+                    captured[req.url] = obj
+        except Exception:
+            try:
+                await route.continue_()
+            except Exception:
+                pass
+
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         context = await browser.new_context(
@@ -134,36 +158,35 @@ async def _warm_waterland(status: dict) -> dict[str, list]:
             viewport={"width": 1280, "height": 900},
         )
         page = await context.new_page()
-        seen_status: list[str] = []
-        page.on("response", lambda r: seen_status.append(f"{r.status}")
-                if "availability.json" in r.url else None)
+        await page.route("**/availability.json*", _on_route)
 
         for course in gm.COURSES:
             ok, failed, errors = 0, 0, []
             for d in _dates():
                 url = f"{course['base_url']}/consumer/book?area={course['area']}&date={d}T00:00"
                 data = None
-                last_err = None
                 for attempt in range(2):
+                    captured.clear()
                     try:
-                        async with page.expect_response(
-                            lambda r: "availability.json" in r.url and d in r.url and r.status == 200,
-                            timeout=25000,
-                        ) as resp_info:
-                            await page.goto(url, wait_until="domcontentloaded", timeout=25000)
-                        data = await (await resp_info.value).json()
+                        await page.goto(url, wait_until="domcontentloaded", timeout=25000)
+                    except Exception:
+                        pass
+                    # The SPA holds a live connection (networkidle never settles), so
+                    # poll the route-captured data instead of waiting on the page.
+                    for _ in range(20):
+                        data = next((v for k, v in captured.items() if d in k), None)
+                        if data is not None:
+                            break
+                        await page.wait_for_timeout(500)
+                    if data is not None:
                         break
-                    except Exception as e:
-                        last_err = e
-                        await page.wait_for_timeout(1500)
                 if data is None:
                     failed += 1
-                    errors.append(f"{d}: {type(last_err).__name__}: {last_err}")
-                    print(f"WARNING golfmanager {course['course_name']} {d}: {last_err} "
-                          f"(availability.json statuses seen: {seen_status[-5:]})", file=sys.stderr)
+                    errors.append(f"{d}: no parseable 200 availability.json captured")
+                    print(f"WARNING golfmanager {course['course_name']} {d}: "
+                          f"no parseable availability.json captured", file=sys.stderr)
                     continue
-                items = data.get("items", [])
-                tts = gm.items_to_teetimes(course, items)
+                tts = gm.items_to_teetimes(course, data.get("items", []))
                 by_day[d].extend(t.model_dump(mode="json") for t in tts)
                 ok += 1
             per_course[course["course_name"]] = {"ok": failed == 0, "dates_ok": ok, "dates_failed": failed, "errors": errors}
