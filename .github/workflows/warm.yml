@@ -2,10 +2,10 @@ name: warm
 
 on:
   schedule:
-    # teecontrol's rate limit forces a gentle ~16-min warm; keep the interval
-    # safely above the run time so scheduled runs never back up (cancel-in-progress
-    # is false). 20 min = ~16-min run + margin.
-    - cron: "*/20 * * * *"
+    # teecontrol's rate limit forces a gentle warm that grows with the course
+    # count; it now runs ~20-25 min, so keep the interval safely above the run
+    # time (cancel-in-progress is false) and the job timeout above that again.
+    - cron: "*/45 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -18,7 +18,7 @@ concurrency:
 jobs:
   warm:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
