@@ -671,6 +671,7 @@
 
   .ov-num { text-align: center; width: 52px; font-variant-numeric: tabular-nums; }
   .ov-first { text-align: center; width: 58px; font-weight: 600; white-space: nowrap; }
+  .ov-klik { color: #2d7a3a; font-weight: 600; text-decoration: underline; white-space: nowrap; }
 
   /* Desktop Overzicht: tables side by side (9 courses each), scroll right */
   .ov-columns { display: flex; align-items: flex-start; gap: 18px; padding: 0 12px 12px; }
@@ -1392,6 +1393,15 @@
     "Lochemse":            { landschap: ["bos"],          hoogte: "plat" },
   };
 
+  // Courses we can't query for live tee times (anti-scrape booking systems), but
+  // still want listed so users know they exist and can check the club site directly.
+  const PLACEHOLDER_COURSES = {
+    "Waterland": {
+      booking_url: "https://eu.golfmanager.com/golfwaterland/consumer/book?area=2",
+      banen: 2,
+    },
+  };
+
   function courseTagLabel(courseName) {
     const t = COURSE_TAGS[courseName];
     if (!t) return '';
@@ -1916,6 +1926,30 @@
     applyFilters();
   }
 
+  // Placeholder courses pass the same landschap/hoogte/distance/excluded filters as
+  // real courses, but ignore time/holes/players (we have no live data for them).
+  function getPlaceholderGroups(presentCourses) {
+    const out = [];
+    for (const [name, info] of Object.entries(PLACEHOLDER_COURSES)) {
+      if (presentCourses.has(name)) continue;  // real data showed up → don't double-list
+      if (excludedCourses.has(name)) continue;
+      if (maxKm !== null && userCoords) {
+        const km = courseKm(name);
+        if (km === null || km > maxKm) continue;
+      }
+      if (landschapFilter.size > 0) {
+        const t = COURSE_TAGS[name];
+        if (!t || !t.landschap.some(l => landschapFilter.has(l))) continue;
+      }
+      if (hoogteFilter.size > 0) {
+        const t = COURSE_TAGS[name];
+        if (!t || !hoogteFilter.has(t.hoogte)) continue;
+      }
+      out.push({ course: name, placeholder: true, booking_url: info.booking_url, banen: info.banen });
+    }
+    return out;
+  }
+
   function applyFilters() {
     const container = document.getElementById('table-container');
     const message = document.getElementById('message');
@@ -1948,7 +1982,10 @@
       });
     }
 
-    if (visible.length === 0) {
+    const presentCourses = new Set(visible.map(r => r.course));
+    const placeholders = getPlaceholderGroups(presentCourses);
+
+    if (visible.length === 0 && placeholders.length === 0) {
       message.style.display = 'flex';
       message.className = '';
       message.textContent = 'Geen tee times gevonden voor deze filters.';
@@ -1968,12 +2005,13 @@
         else { overzichtBtn.classList.add('visible'); renderTable(clubRows, container); return; }
       }
       overzichtBtn.classList.remove('visible');  // no "back" button while already on the Overzicht
-      renderOverview(visible, container);
+      renderOverview(visible, container, placeholders);
       return;
     }
 
     overzichtBtn.classList.remove('visible');
-    if (desktopView === 'grid') {
+    // Grid only renders real time-slot data; placeholders live in the Overzicht.
+    if (desktopView === 'grid' && visible.length > 0) {
       if (selectedClub) {
         const clubRows = visible.filter(r => r.course === selectedClub);
         if (clubRows.length === 0) { selectedClub = null; renderTable(visible, container); }
@@ -1982,7 +2020,7 @@
         renderTable(visible, container);
       }
     } else {
-      renderOverview(visible, container);
+      renderOverview(visible, container, placeholders);
     }
   }
 
@@ -1991,7 +2029,7 @@
     if (btn) btn.textContent = desktopView === 'overzicht' ? 'Grid' : 'Overzicht';
   }
 
-  function renderOverview(data, container) {
+  function renderOverview(data, container, placeholders = []) {
     const groups = new Map();
     for (const r of data) {
       let g = groups.get(r.course);
@@ -1999,6 +2037,10 @@
       g.configs.add(`${r.sub_course}|||${r.holes}`);
       g.count++;
       if (r.time < g.first) g.first = r.time;
+    }
+
+    for (const p of placeholders) {
+      if (!groups.has(p.course)) groups.set(p.course, p);
     }
 
     const rows = [...groups.values()].sort((a, b) => {
@@ -2034,11 +2076,15 @@
       const tbody = document.createElement('tbody');
       for (const g of subset) {
         const tr = document.createElement('tr');
-        tr.addEventListener('click', () => {
-          selectedClub = g.course;
-          if (!isMobile()) { desktopView = 'grid'; updateViewToggleLabel(); }
-          applyFilters();
-        });
+        if (g.placeholder) {
+          tr.addEventListener('click', () => window.open(g.booking_url, '_blank'));
+        } else {
+          tr.addEventListener('click', () => {
+            selectedClub = g.course;
+            if (!isMobile()) { desktopView = 'grid'; updateViewToggleLabel(); }
+            applyFilters();
+          });
+        }
 
         const clubTd = document.createElement('td');
         const clubWrap = document.createElement('div');
@@ -2066,15 +2112,15 @@
 
         const banenTd = document.createElement('td');
         banenTd.className = 'ov-num';
-        banenTd.textContent = g.configs.size;
+        banenTd.textContent = g.placeholder ? g.banen : g.configs.size;
 
         const ttTd = document.createElement('td');
-        ttTd.className = 'ov-num';
-        ttTd.textContent = g.count;
+        ttTd.className = g.placeholder ? 'ov-klik' : 'ov-num';
+        ttTd.textContent = g.placeholder ? 'Klik hier' : g.count;
 
         const firstTd = document.createElement('td');
-        firstTd.className = 'ov-first';
-        firstTd.textContent = g.first;
+        firstTd.className = g.placeholder ? 'ov-klik' : 'ov-first';
+        firstTd.textContent = g.placeholder ? 'Klik hier' : g.first;
 
         tr.append(clubTd, banenTd, ttTd, firstTd);
         tbody.appendChild(tr);
