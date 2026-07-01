@@ -1,23 +1,31 @@
 """Out-of-band warmer for the slow / rate-limited backends.
 
-Vercel kills each request at 10s, but teecontrol (~55s, hard rate limit),
-nexxchange (~43s, rate limit) and golfmanager/Waterland (JS-token gated) cannot
-finish in that window, so they silently vanish from the live app. This script
-runs in GitHub Actions (no time limit), fetches them for the next week at the
-WIDEST settings, and writes warm.json. The app reads that file and filters per
-request. See cache_backend.py for the read side.
+Vercel kills each request at 10s, but teecontrol (~55s, hard rate limit) and
+nexxchange (~43s, rate limit) cannot finish in that window, so they silently
+vanish from the live app. This script runs in GitHub Actions (no time limit),
+fetches them for the next week at the WIDEST settings, and writes warm.json. The
+app reads that file and filters per request. See cache_backend.py for the read side.
 
-teecontrol/nexxchange rate-limit PER IP, so the work is SHARDED across several
-GitHub runners (each its own IP) to fit a tighter refresh interval:
+Normal use is one process fetching everything, then merging (the workflow runs
+these two commands back-to-back):
 
-    python warm.py --shard I --of N   # one runner: fetch its slice -> warm_shard_I.json
-    python warm.py --merge --of N     # combine the shard files -> warm.json
+    python warm.py --shard 0 --of 1   # fetch all clubs -> warm_shard_0.json
+    python warm.py --merge --of 1     # -> warm.json (carry-forward), publish to `data`
 
-The merge CARRIES FORWARD the previous warm.json for any course a shard failed
-to fetch, so a single flaky shard never silently drops courses; it only makes
-those courses slightly stale (and the monitor — monitor.py — alerts on it).
-`course_fresh_at` records, per course, when it was last successfully fetched;
-that is the signal the monitor watches.
+The sharding args survive so the work CAN be split across runners (each its own
+IP) if throughput ever needs it, but teecontrol has a process-global request
+throttle, so a single process is already rate-safe; sharding is not needed at the
+current course count. The merge CARRIES FORWARD the previous warm.json for any
+course this run failed to fetch, so a flaky backend never silently drops courses;
+it only makes those courses slightly stale (and the monitor — monitor.py — alerts
+on it). `course_fresh_at` records, per course, when it was last successfully
+fetched; that is the signal the monitor watches.
+
+Reliability: the workflow (.github/workflows/warm.yml) is driven by a
+self-perpetuating workflow_dispatch chain rather than GitHub's `schedule:` trigger,
+because scheduled events are best-effort and GitHub drops them for hours under
+load. Each run re-arms the next; a slow `schedule:` only exists as a backstop to
+restart the chain if it ever dies.
 """
 import argparse
 import asyncio
@@ -31,7 +39,6 @@ import httpx
 
 from scrapers import teecontrol as tc
 from scrapers import nexxchange as nx
-from scrapers import golfmanager as gm
 
 DAYS = 7
 HERE = Path(__file__).parent
@@ -61,10 +68,12 @@ def _shard(seq: list, shard: int, total: int) -> list:
 
 def expected_courses() -> set[str]:
     """Every course the warmer is responsible for (the warmed backends only).
-    The monitor and the carry-forward both key off this set, by course name."""
+    The monitor and the carry-forward both key off this set, by course name.
+    Waterland (golfmanager) is intentionally excluded: its API is anti-scrape
+    gated and can't be warmed, so it stays listed-but-empty in the app and out of
+    the health set (otherwise it would falsely read as one permanently stale course)."""
     names = {c["course_name"] for c in tc.COURSES}
     names |= {c["name"] for c in nx.COURSES}
-    names |= {c["course_name"] for c in gm.COURSES}
     return names
 
 
@@ -106,94 +115,6 @@ async def _warm_clubs(name: str, courses: list, fetch_one, key, status: dict) ->
     return by_day
 
 
-async def _warm_waterland(status: dict) -> dict[str, list]:
-    """Waterland's availability API is gated by a client-side signed token, so a
-    real browser is the reliable way in. Capture the availability.json response."""
-    by_day: dict[str, list] = defaultdict(list)
-    per_course: dict[str, dict] = {}
-    try:
-        from playwright.async_api import async_playwright
-    except ImportError as e:
-        for course in gm.COURSES:
-            per_course[course["course_name"]] = {"ok": False, "dates_ok": 0, "dates_failed": DAYS,
-                                                 "errors": [f"playwright not installed: {e}"]}
-        status["golfmanager"] = per_course
-        return by_day
-
-    # golfmanager ENCRYPTS the availability.json body (200, text/plain, ~86KB of
-    # base64 that the SPA's JS decrypts client-side), so no HTTP-level capture yields
-    # JSON. We grab the data right after the SPA decrypts it, by hooking JSON.parse
-    # via add_init_script (runs before page scripts, fresh on every navigation) and
-    # stashing any decrypted availability array on window.__cap.
-    # (Also: it refuses the session for a HeadlessChrome UA, hence the realistic UA.)
-    HOOK = """
-    (() => {
-      window.__cap = [];
-      const _p = JSON.parse;
-      JSON.parse = function () {
-        const r = _p.apply(this, arguments);
-        try {
-          const arr = Array.isArray(r) ? r : (r && r.items);
-          if (Array.isArray(arr) && arr.length && arr[0] &&
-              ('start' in arr[0]) && ('slots' in arr[0])) {
-            window.__cap.push(arr);
-          }
-        } catch (e) {}
-        return r;
-      };
-    })();
-    """
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        context = await browser.new_context(
-            user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
-            viewport={"width": 1280, "height": 900},
-        )
-        await context.add_init_script(HOOK)
-        page = await context.new_page()
-        diagged = False
-
-        for course in gm.COURSES:
-            ok, failed, errors = 0, 0, []
-            for d in _dates():
-                url = f"{course['base_url']}/consumer/book?area={course['area']}&date={d}T00:00"
-                items = None
-                for attempt in range(2):
-                    try:
-                        await page.goto(url, wait_until="domcontentloaded", timeout=25000)
-                    except Exception:
-                        pass
-                    for _ in range(24):
-                        caps = await page.evaluate("() => window.__cap || []")
-                        if caps:
-                            items = max(caps, key=len)   # the availability array
-                            break
-                        await page.wait_for_timeout(500)
-                    if items:
-                        break
-                if not items:
-                    failed += 1
-                    errors.append(f"{d}: no decrypted availability captured")
-                    print(f"WARNING golfmanager {course['course_name']} {d}: "
-                          f"no decrypted availability captured", file=sys.stderr)
-                    continue
-                if not diagged:
-                    diagged = True
-                    print(f"DIAG waterland captured {len(items)} items; "
-                          f"keys={list(items[0].keys())}; sample={items[0]}", file=sys.stderr)
-                tts = gm.items_to_teetimes(course, items)
-                by_day[d].extend(t.model_dump(mode="json") for t in tts)
-                ok += 1
-            per_course[course["course_name"]] = {"ok": failed == 0, "dates_ok": ok, "dates_failed": failed, "errors": errors}
-
-        await browser.close()
-
-    status["golfmanager"] = per_course
-    return by_day
-
-
 def _merge(target: dict[str, list], src: dict[str, list]) -> None:
     for d, rows in src.items():
         target.setdefault(d, []).extend(rows)
@@ -225,11 +146,6 @@ async def fetch_slice(shard: int, total: int) -> None:
                     lambda c: c["name"], status),
     ]
     parts = list(await asyncio.gather(*tasks))
-
-    # Waterland is a single Playwright course; only shard 0 runs it (no point
-    # installing/driving a browser on every runner).
-    if shard == 0:
-        parts.append(await _warm_waterland(status))
 
     days: dict[str, list] = {}
     for part in parts:

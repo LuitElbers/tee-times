@@ -1,29 +1,28 @@
 name: warm
 
+# WHY THIS IS NOT A PLAIN `schedule:` CRON
+# GitHub's scheduled events are best-effort and get DROPPED for hours under load
+# (observed: warm.json went 10h stale while "every 30 min" runs simply never fired).
+# So the warmer drives ITSELF: every run re-arms the next one via workflow_dispatch
+# (those fire reliably, unlike schedule). The `schedule:` below is only a slow
+# backstop that restarts the chain if it ever dies. Net effect: fresh data ~every
+# 20 min with no reliance on GitHub's flaky scheduler.
 on:
-  schedule:
-    # teecontrol/nexxchange rate-limit PER IP, so the work is sharded across 3
-    # runners (3 IPs) -> each shard ~8-10 min instead of one ~22-min run.
-    # Offset minutes (:08/:38), NOT :00/:30: GitHub most often drops scheduled
-    # events at the top of the hour, so on-the-hour crons silently don't fire.
-    - cron: "8,38 * * * *"
   workflow_dispatch:
+  schedule:
+    - cron: "23 */2 * * *"   # backstop only: restart the chain if it has died
 
 permissions:
   contents: write
 
 concurrency:
   group: warmer
-  cancel-in-progress: false
+  cancel-in-progress: false   # queue overlaps, never cancel a warm mid-flight
 
 jobs:
   warm:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false          # one shard failing must not cancel the others
-      matrix:
-        shard: [0, 1, 2]
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
 
@@ -35,50 +34,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Only shard 0 fetches Waterland (golfmanager), which needs a browser.
-      - name: Install Playwright + Chromium (shard 0 only)
-        if: matrix.shard == 0
+      - name: Record start time (for pacing)
+        run: echo "START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Warm slow backends -> warm.json
         run: |
-          pip install playwright
-          python -m playwright install --with-deps chromium
+          python warm.py --shard 0 --of 1
+          python warm.py --merge --of 1
 
-      - name: Fetch shard
-        run: python warm.py --shard ${{ matrix.shard }} --of 3
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: warm-shard-${{ matrix.shard }}
-          path: warm_shard_${{ matrix.shard }}.json
-          retention-days: 1
-          if-no-files-found: error
-
-  merge:
-    needs: warm
-    if: always()              # still merge (carry-forward) even if a shard failed
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Download shard results
-        uses: actions/download-artifact@v4
-        with:
-          path: .
-          pattern: warm-shard-*
-          merge-multiple: true   # drop all warm_shard_*.json into the workspace root
-
-      - name: Merge shards (carry-forward missing courses from previous warm.json)
-        run: python warm.py --merge --of 3
-
-      - name: Publish to data branch
+      - name: Publish warm.json to the data branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -89,3 +53,41 @@ jobs:
           git add -f warm.json
           git commit -m "warm $(date -u +%FT%TZ)"
           git push -f origin data-tmp:data
+
+      - name: Dead-man's switch ping (independent of GitHub)
+        if: success()
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          if [ -n "$HC_URL" ]; then
+            curl -fsS --max-time 10 "$HC_URL" && echo "pinged dead-man's switch"
+          else
+            echo "HEALTHCHECK_URL not set (optional backstop alert); skipping"
+          fi
+
+      # Re-arm the chain even if warming failed, so a transient error can't stop
+      # the loop. Paced to a ~20-min floor (so a fast failure can't hot-loop) and
+      # deduped (so the schedule backstop can't spawn a second parallel chain).
+      - name: Re-arm the chain
+        if: always()
+        env:
+          TOKEN: ${{ secrets.WARM_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "WARM_PAT not set; cannot self-dispatch. The schedule backstop will restart the chain."
+            exit 0
+          fi
+          NOW=$(date +%s); EL=$(( NOW - ${START:-$NOW} )); MIN=1200
+          if [ "$EL" -lt "$MIN" ]; then echo "pacing: sleep $((MIN-EL))s to hold ~20-min cadence"; sleep $((MIN-EL)); fi
+          PENDING=$(curl -s -H "Authorization: token $TOKEN" \
+            "https://api.github.com/repos/$REPO/actions/workflows/warm.yml/runs?per_page=30" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(sum(1 for r in d.get('workflow_runs',[]) if r['status'] in ('queued','in_progress','waiting')))")
+          echo "warm runs currently pending (incl. this one): $PENDING"
+          if [ "${PENDING:-0}" -gt 1 ]; then
+            echo "another warm run is already pending; not re-arming (avoids parallel chains)"
+            exit 0
+          fi
+          curl -s -X POST -H "Authorization: token $TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/workflows/warm.yml/dispatches" \
+            -d '{"ref":"main"}' -w "re-arm dispatch HTTP %{http_code}\n"
