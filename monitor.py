@@ -1,7 +1,7 @@
 """Independent health monitor for the warmer.
 
 The warmer (warm.py, GitHub Actions) republishes warm.json every ~30 min. If it
-silently stops (the failure that prompted this), or a shard keeps failing so a
+silently stops (the failure that prompted this), or a backend keeps failing so a
 group of courses stops updating, tee-time availability goes stale and nobody
 notices. This runs on its OWN schedule (so it still fires even if the warmer
 workflow is completely dead) and alerts on Telegram.
@@ -26,8 +26,8 @@ STATE_URL = "https://raw.githubusercontent.com/LuitElbers/tee-times/monitor/moni
 STATE_OUT = Path(__file__).parent / "monitor_state.json"
 
 OVERALL_STALE_H = 2     # warm.json should republish every ~30 min; >2h = warmer down
-COURSE_STALE_H = 3      # a course not freshly fetched in >3h = its shard persistently failing
-STALE_COURSE_MIN = 4    # only alert on a "bunch" (e.g. a whole shard ~15); 1-2 flaky
+COURSE_STALE_H = 3      # a course not freshly fetched in >3h = that backend persistently failing
+STALE_COURSE_MIN = 4    # only alert on a "bunch" (e.g. a whole backend); 1-2 flaky
                         # courses are covered by carry-forward and just noted, not alerted
 REALERT_H = 6           # while still down, re-alert at most this often
 
@@ -70,7 +70,7 @@ def assess(warm: dict | None, now: datetime) -> tuple[bool, str]:
             age = float("inf") if ts is None else _age_h(ts, now)
             if age > COURSE_STALE_H:
                 stale.append((course, "never" if ts is None else f"{age:.1f}h"))
-    # A bunch of stale courses (a shard persistently failing) is an alert; 1-3
+    # A bunch of stale courses (a backend persistently failing) is an alert; 1-3
     # flaky ones are covered by carry-forward, so note them but don't alarm.
     if len(stale) >= STALE_COURSE_MIN:
         shown = ", ".join(f"{c} ({a})" for c, a in stale[:12])
