@@ -45,6 +45,9 @@ jobs:
           git checkout --orphan monitor-tmp
           git rm -rf . >/dev/null 2>&1 || true
           cp "$RUNNER_TEMP/monitor_state.json" monitor_state.json
-          git add -f monitor_state.json
+          # See warm.yml: ignoreCommand exit 0 makes Vercel skip this orphan branch's
+          # preview build, so pushes here stop generating failed-deployment emails.
+          printf '{"ignoreCommand":"exit 0"}' > vercel.json
+          git add -f monitor_state.json vercel.json
           git commit -m "monitor state $(date -u +%FT%TZ)"
           git push -f origin monitor-tmp:monitor

@@ -50,7 +50,11 @@ jobs:
           git checkout --orphan data-tmp
           git rm -rf . >/dev/null 2>&1 || true
           cp "$RUNNER_TEMP/warm.json" warm.json
-          git add -f warm.json
+          # Gate Vercel on the orphan branch itself: it reads ignoreCommand from the
+          # deployed branch, and exit 0 => skip build (skipped deploys send no email).
+          # A vercel.json on main can't reach this branch because it's wiped to orphan.
+          printf '{"ignoreCommand":"exit 0"}' > vercel.json
+          git add -f warm.json vercel.json
           git commit -m "warm $(date -u +%FT%TZ)"
           git push -f origin data-tmp:data
 
