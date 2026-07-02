@@ -1,7 +1,9 @@
 {
   "git": {
     "deploymentEnabled": {
-      "data": false
+      "data": false,
+      "monitor": false,
+      "vercel/install-vercel-web-analytics-zp7xgi": false
     }
   }
 }
